@@ -1,0 +1,56 @@
+# Large/generated analysis outputs
+*.root
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.eps
+*.gif
+
+# Logs and runtime outputs
+*.log
+*.out
+*.err
+*.tmp
+nohup.out
+
+# ROOT/C++ build products
+*.so
+*.pcm
+*.d
+*.o
+*.a
+*.exe
+
+# Python cache
+__pycache__/
+*.pyc
+
+# CMSSW build/runtime products
+biglib/
+bin/
+cfipython/
+config/
+doc/
+include/
+lib/
+logs/
+objs/
+python/
+.SCRAM/
+static/
+test/
+tmp/
+
+# CRAB outputs
+crab_projects/
+*/crab_projects/
+
+# Editor/system files
+.DS_Store
+.vscode/
+.idea/
+
+#md
+*.md
+*/docs/
