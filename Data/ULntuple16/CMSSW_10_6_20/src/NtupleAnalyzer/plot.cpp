@@ -1,40 +1,64 @@
 // Author: Shiyang CHEN
-// Description: 
-// Implementation: 
+// Description: Draw weighted distributions from Weight*.root.
 #include <iostream>
-#include <fstream>
+#include <string>
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1D.h"
 #include "TCanvas.h"
+#include "TSystem.h"
 using namespace std;
 #define PI 3.14159265359
 
+// I/O and behavior switches.
+// Change inputFileName to WeightDPS.root or WeightData.root when needed.
+const string inputFileName = "WeightSPS.root";
+const string outPlotDir = "plots/";
+const bool drawWeightComparison = false;  // false: weighted only; true: unweighted vs weighted.
+
+void drawWeightedOnly(TH1D &weighted, const string &outName) {
+    TCanvas canvas(("c_" + outName).c_str(), outName.c_str(), 1000, 800);
+    weighted.SetStats(0);
+    weighted.Draw("hist");
+    canvas.SaveAs((outPlotDir + outName + ".png").c_str());
+}
+
+void drawComparison(TH1D &unweighted, TH1D &weighted, const string &outName) {
+    TCanvas canvas(("c_" + outName).c_str(), outName.c_str(), 1000, 500);
+    canvas.Divide(2, 1);
+    canvas.cd(1);
+    unweighted.SetStats(0);
+    unweighted.Draw("hist");
+    canvas.cd(2);
+    weighted.SetStats(0);
+    weighted.Draw("hist");
+    canvas.SaveAs((outPlotDir + outName + ".png").c_str());
+}
+
+void savePlot(TH1D &unweighted, TH1D &weighted, const string &outName) {
+    if(drawWeightComparison) drawComparison(unweighted, weighted, outName);
+    else drawWeightedOnly(weighted, outName);
+}
+
 void plot() {
-    // TFile inFile("WeightDPS.root", "READ");
-    TFile inFile("WeightSPS.root", "READ");
-    // TFile inFile("WeightData.root", "READ");
+    gSystem->mkdir(outPlotDir.c_str(), kTRUE);
+
+    TFile inFile(inputFileName.c_str(), "READ");
     TTree *inTree = (TTree *)inFile.Get("data");
+    if(!inTree) {
+        cout<<"Cannot find tree data in "<<inputFileName<<endl;
+        return;
+    }
     // Define variables
-    Double_t Jpsi_pt1, Jpsi_y1, Jpsi_mass1, Jpsi_ctau1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
-    Double_t Jpsi_pt2, Jpsi_y2, Jpsi_mass2, Jpsi_ctau2;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
-    Double_t evt_weight, evt_mass, delta_phi;//, evt_d;
+    Double_t Jpsi_mass1, Jpsi_ctau1;
+    Double_t Jpsi_mass2, Jpsi_ctau2;
+    Double_t evt_weight, evt_mass, delta_y, delta_phi;//, evt_d;
     inTree->SetBranchAddress("Jpsi_mass1", &Jpsi_mass1);
     inTree->SetBranchAddress("Jpsi_ctau1", &Jpsi_ctau1);
-    // inTree->SetBranchAddress("Jpsi_sigLxy", &Jpsi_sigLxy);
-    // inTree->SetBranchAddress("Jpsi_eta", &Jpsi_eta);
-    // inTree->SetBranchAddress("Jpsi_phi", &Jpsi_phi);
-    // inTree->SetBranchAddress("Jpsi_pt", &Jpsi_pt);
-    // inTree->SetBranchAddress("Jpsi_y", &Jpsi_y);
     inTree->SetBranchAddress("Jpsi_mass2", &Jpsi_mass2);
     inTree->SetBranchAddress("Jpsi_ctau2", &Jpsi_ctau2);
-    // inTree->SetBranchAddress("Jpsi_sigLxy", &Jpsi_sigLxy);
-    // inTree->SetBranchAddress("Jpsi_eta", &Jpsi_eta);
-    // inTree->SetBranchAddress("Jpsi_phi", &Jpsi_phi);
-    // inTree->SetBranchAddress("Jpsi_pt", &Jpsi_pt);
-    // inTree->SetBranchAddress("Jpsi_y", &Jpsi_y);
-    // inTree->SetBranchAddress("evt_d", &evt_d);
     inTree->SetBranchAddress("evt_mass", &evt_mass);
+    inTree->SetBranchAddress("delta_y", &delta_y);
     inTree->SetBranchAddress("delta_phi", &delta_phi);
     inTree->SetBranchAddress("evt_weight", &evt_weight);
     // Define histograms
@@ -42,37 +66,19 @@ void plot() {
     TH1D h_Jpsi_mass2("h_Jpsi_mass2", "Jpsi_mass_unweighted2", 50, 2.95, 3.25), wh_Jpsi_mass2("wh_Jpsi_mass2", "Jpsi_mass_weighted2", 50, 2.95, 3.25);
     TH1D h_Jpsi_ctau1("h_Jpsi_ctau1", "Jpsi_ctau_unweighted1", 50, -0.02, 0.15), wh_Jpsi_ctau1("wh_Jpsi_ctau1", "Jpsi_ctau_weighted1", 50, -0.02, 0.15);
     TH1D h_Jpsi_ctau2("h_Jpsi_ctau2", "Jpsi_ctau_unweighted2", 50, -0.02, 0.15), wh_Jpsi_ctau2("wh_Jpsi_ctau2", "Jpsi_ctau_weighted2", 50, -0.02, 0.15);
-    // TH1D h_Jpsi_sigLxy("h_Jpsi_sigLxy", "Jpsi_sigLxy_unweighted", 50, 0, 25), wh_Jpsi_sigLxy("wh_Jpsi_sigLxy", "Jpsi_sigLxy_weighted", 50, 0, 25);
-    // TH1D h_Jpsi_sigLxy("h_Jpsi_sigLxy", "Jpsi_sigLxy_unweighted", 50, 0, 25), wh_Jpsi_sigLxy("wh_Jpsi_sigLxy", "Jpsi_sigLxy_weighted", 50, 0, 25);
-    // TH1D h_Jpsi_pt("h_Jpsi_pt", "Jpsi_pt_unweighted", 50, 10, 40), wh_Jpsi_pt("wh_Jpsi_pt", "Jpsi_pt_weighted", 50, 10, 40);
-    // TH1D h_Jpsi_pt("h_Jpsi_pt", "Jpsi_pt_unweighted", 50, 10, 40), wh_Jpsi_pt("wh_Jpsi_pt", "Jpsi_pt_weighted", 50, 10, 40);
-    // TH1D h_Jpsi_y("h_Jpsi_y", "Jpsi_y_unweighted", 50, -2, 2), wh_Jpsi_y("wh_Jpsi_y", "Jpsi_y_weighted", 50, -2, 2);
-    // TH1D h_Jpsi_y("h_Jpsi_y", "Jpsi_y_unweighted", 50, -2, 2), wh_Jpsi_y("wh_Jpsi_y", "Jpsi_y_weighted", 50, -2, 2);
-    // TH1D h_delta_eta("h_delta_eta", "h_delta_eta", 6, 0, 2.4), wh_delta_eta("wh_delta_eta", "wh_delta_eta", 6, 0, 2.4);
-    // TH1D h_delta_phi("h_delta_phi", "h_delta_phi", 12, 0, 3), wh_delta_phi("wh_delta_phi", "wh_delta_phi", 12, 0, 3);
-    // TH1D h_evt_d("h_evt_d", "h_evt_d", 50, 0, 75), wh_evt_d("wh_evt_d", "wh_evt_d", 50, 0, 75);
-    // TH1D h_Jpsi_eta("h_Jpsi_eta", "h_Jpsi_eta", 10, -2.4, 2.4), wh_Jpsi_eta("wh_Jpsi_eta", "wh_Jpsi_eta", 10, -2.4, 2.4);
-    // TH1D h_Jpsi_phi("h_Jpsi_phi", "h_Jpsi_phi", 10, -3, 3), wh_Jpsi_phi("wh_Jpsi_phi", "wh_Jpsi_phi", 10, -3, 3);
     wh_Jpsi_mass1.Sumw2();
     wh_Jpsi_mass2.Sumw2();
     wh_Jpsi_ctau1.Sumw2();
     wh_Jpsi_ctau2.Sumw2();
-    // wh_Jpsi_sigLxy.Sumw2();
-    // wh_Jpsi_sigLxy.Sumw2();
-    // wh_Jpsi_pt.Sumw2();
-    // wh_Jpsi_pt.Sumw2();
-    // wh_Jpsi_y.Sumw2();
-    // wh_Jpsi_y.Sumw2();
-    // wh_delta_eta.Sumw2();
-    // wh_delta_phi.Sumw2();
-    // wh_Jpsi_eta.Sumw2();
-    // wh_Jpsi_phi.Sumw2();
-    TH1D h_evt_mass("h_evt_mass", "evt_mass_unweighted", 100, 7.5, 17.5), wh_evt_mass("wh_evt_mass", "evt_mass_weighted", 100, 7.5, 17.5);
-    TH1D h_delta_phi("h_delta_phi", "delta_phi_unweighted", 100, 0, PI), wh_delta_phi("wh_delta_phi", "delta_phi_weighted", 100, 0, PI);
+    TH1D h_evt_mass("h_evt_mass", "evt_mass_unweighted", 100, 7.5, 107.5), wh_evt_mass("wh_evt_mass", "evt_mass_weighted", 100, 7.5, 107.5);
+    TH1D h_delta_y("h_delta_y", "delta_y_unweighted", 80, 0, 4.0), wh_delta_y("wh_delta_y", "delta_y_weighted", 80, 0, 4.0);
+    TH1D h_delta_phi("h_delta_phi", "delta_phi_unweighted", 80, 0, PI), wh_delta_phi("wh_delta_phi", "delta_phi_weighted", 80, 0, PI);
+    wh_evt_mass.Sumw2();
+    wh_delta_y.Sumw2();
+    wh_delta_phi.Sumw2();
     int nEvent = inTree->GetEntries();
     for(int i = 0; i < nEvent; i++) {
         inTree->GetEntry(i);
-        // if(Jpsi_mass < 3.85 && Jpsi_mass > 3.5) continue;
         h_Jpsi_mass1.Fill(Jpsi_mass1);
         wh_Jpsi_mass1.Fill(Jpsi_mass1, evt_weight);
         h_Jpsi_mass2.Fill(Jpsi_mass2);
@@ -81,162 +87,23 @@ void plot() {
         wh_Jpsi_ctau1.Fill(Jpsi_ctau1, evt_weight);
         h_Jpsi_ctau2.Fill(Jpsi_ctau2);
         wh_Jpsi_ctau2.Fill(Jpsi_ctau2, evt_weight);
-        // h_Jpsi_sigLxy.Fill(Jpsi_sigLxy);
-        // wh_Jpsi_sigLxy.Fill(Jpsi_sigLxy, evt_weight);
-        // h_Jpsi_sigLxy.Fill(Jpsi_sigLxy);
-        // wh_Jpsi_sigLxy.Fill(Jpsi_sigLxy, evt_weight);
-        // h_Jpsi_pt.Fill(Jpsi_pt);
-        // wh_Jpsi_pt.Fill(Jpsi_pt, evt_weight);
-        // h_Jpsi_pt.Fill(Jpsi_pt);
-        // wh_Jpsi_pt.Fill(Jpsi_pt, evt_weight);
-        // h_Jpsi_y.Fill(Jpsi_y);
-        // wh_Jpsi_y.Fill(Jpsi_y, evt_weight);
-        // h_Jpsi_y.Fill(Jpsi_y);
-        // wh_Jpsi_y.Fill(Jpsi_y, evt_weight);
-        // double deltaEta = fabs(Jpsi_eta - Jpsi_eta);
-        // h_delta_eta.Fill(deltaEta);
-        // wh_delta_eta.Fill(deltaEta, evt_weight);
+        h_delta_y.Fill(delta_y);
+        wh_delta_y.Fill(delta_y, evt_weight);
         h_delta_phi.Fill(delta_phi);
         wh_delta_phi.Fill(delta_phi, evt_weight);
-        // h_Jpsi_eta.Fill(Jpsi_eta);
-        // wh_Jpsi_eta.Fill(Jpsi_eta, evt_weight);
-        // h_Jpsi_phi.Fill(Jpsi_phi);
-        // wh_Jpsi_phi.Fill(Jpsi_phi, evt_weight);
         h_evt_mass.Fill(evt_mass);
         wh_evt_mass.Fill(evt_mass, evt_weight);
-        // h_evt_d.Fill(evt_d);
-        // wh_evt_d.Fill(evt_d, evt_weight);
     }
-    TCanvas *outCanvas = new TCanvas("outCanvas", "Jpsi_mass1", 1000, 500);
-    outCanvas->Divide(2, 1);
-    outCanvas->cd(1);
-    h_Jpsi_mass1.Draw();
-    outCanvas->cd(2);
-    wh_Jpsi_mass1.Draw();
-    outCanvas->SaveAs("plots/JpsiMass1.png");
-    delete outCanvas;
-    outCanvas = new TCanvas("outCanvas", "Jpsi_mass2", 1000, 500);
-    outCanvas->Divide(2, 1);
-    outCanvas->cd(1);
-    h_Jpsi_mass2.Draw();
-    outCanvas->cd(2);
-    wh_Jpsi_mass2.Draw();
-    outCanvas->SaveAs("plots/JpsiMass2.png");
-    delete outCanvas;
-    outCanvas = new TCanvas("outCanvas", "Jpsi_ctau1", 1000, 500);
-    outCanvas->Divide(2, 1);
-    outCanvas->cd(1);
-    h_Jpsi_ctau1.Draw();
-    outCanvas->cd(2);
-    wh_Jpsi_ctau1.Draw();
-    outCanvas->SaveAs("plots/JpsiCtau1.png");
-    delete outCanvas;
-    outCanvas = new TCanvas("outCanvas", "Jpsi_ctau2", 1000, 500);
-    outCanvas->Divide(2, 1);
-    outCanvas->cd(1);
-    h_Jpsi_ctau2.Draw();
-    outCanvas->cd(2);
-    wh_Jpsi_ctau2.Draw();
-    outCanvas->SaveAs("plots/JpsiCtau2.png");
-    delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "Jpsi_sigLxy", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_sigLxy.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_sigLxy.Draw();
-    // outCanvas->SaveAs("plots/JpsiSigLxy.png");
-    // delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "Jpsi_sigLxy", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_sigLxy.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_sigLxy.Draw();
-    // outCanvas->SaveAs("plots/JpsiSigLxy.png");
-    // delete outCanvas;
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_pt.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_pt.Draw();
-    // outCanvas->SaveAs("plots/JpsiPt.png");
-    // delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "Jpsi_pt", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_pt.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_pt.Draw();
-    // outCanvas->SaveAs("plots/JpsiPt.png");
-    // delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "Jpsi_y", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_y.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_y.Draw();
-    // outCanvas->SaveAs("plots/JpsiY.png");
-    // delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "Jpsi_y", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_y.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_y.Draw();
-    // outCanvas->SaveAs("plots/JpsiY.png");
-    // delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "delta_eta", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_delta_eta.GetYaxis()->SetRangeUser(0, 1.1 * h_delta_eta.GetMaximum());
-    // h_delta_eta.Draw();
-    // outCanvas->cd(2);
-    // wh_delta_eta.GetYaxis()->SetRangeUser(0, 1.1 * wh_delta_eta.GetMaximum());
-    // wh_delta_eta.Draw();
-    // outCanvas->SaveAs("plots/deltaEta.png");
-    // delete outCanvas;
-    outCanvas = new TCanvas("outCanvas", "delta_phi", 1000, 500);
-    outCanvas->Divide(2, 1);
-    outCanvas->cd(1);
-    h_delta_phi.GetYaxis()->SetRangeUser(0, 1.1 * h_delta_phi.GetMaximum());
-    h_delta_phi.Draw();
-    outCanvas->cd(2);
-    wh_delta_phi.GetYaxis()->SetRangeUser(0, 1.1 * wh_delta_phi.GetMaximum());
-    wh_delta_phi.Draw();
-    outCanvas->SaveAs("plots/deltaPhi.png");
-    delete outCanvas;
-    outCanvas = new TCanvas("outCanvas", "evt_mass", 1000, 500);
-    outCanvas->Divide(2, 1);
-    outCanvas->cd(1);
-    h_evt_mass.Draw();
-    outCanvas->cd(2);
-    wh_evt_mass.Draw();
-    outCanvas->SaveAs("plots/evtMass.png");
-    delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "Jpsi_eta", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_eta.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_eta.Draw();
-    // outCanvas->SaveAs("plots/JpsiEta.png");
-    // delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "Jpsi_phi", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_Jpsi_phi.Draw();
-    // outCanvas->cd(2);
-    // wh_Jpsi_phi.Draw();
-    // outCanvas->SaveAs("plots/JpsiPhi.png");
-    // delete outCanvas;
-    // outCanvas = new TCanvas("outCanvas", "evt_d", 1000, 500);
-    // outCanvas->Divide(2, 1);
-    // outCanvas->cd(1);
-    // h_evt_d.Draw();
-    // outCanvas->cd(2);
-    // wh_evt_d.Draw();
-    // outCanvas->SaveAs("plots/EvtD.png");
-    // delete outCanvas;
+    savePlot(h_Jpsi_mass1, wh_Jpsi_mass1, "JpsiMass1");
+    savePlot(h_Jpsi_mass2, wh_Jpsi_mass2, "JpsiMass2");
+    savePlot(h_Jpsi_ctau1, wh_Jpsi_ctau1, "JpsiCtau1");
+    savePlot(h_Jpsi_ctau2, wh_Jpsi_ctau2, "JpsiCtau2");
+    savePlot(h_evt_mass, wh_evt_mass, "evtMass");
+    savePlot(h_delta_y, wh_delta_y, "deltaY");
+    savePlot(h_delta_phi, wh_delta_phi, "deltaPhi");
+
+    cout<<"Input file: "<<inputFileName<<endl;
+    cout<<"Total events: "<<nEvent<<endl;
+    cout<<"drawWeightComparison = "<<drawWeightComparison<<endl;
     return;
 }

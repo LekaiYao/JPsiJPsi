@@ -51,6 +51,10 @@ crab_projects/
 .vscode/
 .idea/
 
+# Local update scan workspace (never push)
+update/
+
 #md
 *.md
+!README.md
 */docs/
