@@ -73,6 +73,7 @@ class Process {
         // Define input tree variables
         vector<Double_t> *REmu_pt = 0;
         vector<Double_t> *REJpsi_pt = 0, *REJpsi_eta = 0, *REJpsi_y = 0, *REJpsi_phi = 0, *REJpsi_mass = 0, *REJpsi_ctau = 0;//, *REJpsi_sigLxy = 0;
+        Double_t GEJpsi1_phi = 0, GEJpsi2_phi = 0;
         vector<int> *REJpsi_muId1 = 0;//, *REJpsi_muId2 = 0;
         vector<Double_t> *REevt_fourMuMass = 0, *REevt_vtxProb = 0;//, *REevt_d = 0, *REevt_L1muPtMax = 0;
         vector<int> *REevt_JpsiId1 = 0, *REevt_JpsiId2 = 0;
@@ -85,6 +86,8 @@ class Process {
         inTree->SetBranchAddress("REJpsi_phi", &REJpsi_phi);
         inTree->SetBranchAddress("REJpsi_mass", &REJpsi_mass);
         inTree->SetBranchAddress("REJpsi_ctau", &REJpsi_ctau);
+        inTree->SetBranchAddress("GEJpsi1_phi", &GEJpsi1_phi);
+        inTree->SetBranchAddress("GEJpsi2_phi", &GEJpsi2_phi);
         // inTree->SetBranchAddress("REJpsi_sigLxy", &REJpsi_sigLxy);
         inTree->SetBranchAddress("REJpsi_muId1", &REJpsi_muId1);
         // inTree->SetBranchAddress("REJpsi_muId2", &REJpsi_muId2);
@@ -131,6 +134,7 @@ class Process {
                 // double deltaPhi = PI - fabs(fabs(REJpsi_phi->at(JpsiId) - REpsi2S_phi->at(psi2SId)) - PI);
                 // if(deltaPhi < 2 || deltaPhi >= 3) continue;
                 delta_phi.push_back(PI - fabs(fabs(REJpsi_phi->at(JpsiId1) - REJpsi_phi->at(JpsiId2)) - PI));
+                delta_phi_GEN.push_back(PI - fabs(fabs(GEJpsi1_phi - GEJpsi2_phi) - PI));
 
                 // double deltaY = fabs(REJpsi_y->at(JpsiId) - REpsi2S_y->at(psi2SId));
                 // if(deltaY < 2.0 || deltaY >= 2.4) continue;
@@ -186,7 +190,7 @@ class Process {
     vector<Double_t> Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_y1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
     vector<Double_t> Jpsi_mass2, Jpsi_ctau2, Jpsi_pt2, Jpsi_y2;//, psi2S_sigLxy, psi2S_eta, psi2S_phi;
     vector<Double_t> evt_weight, evt_vtxProb;//, evt_d;
-    vector<Double_t> evt_mass, evt_y, evt_pt, delta_y, delta_phi, evt_mass2;
+    vector<Double_t> evt_mass, evt_y, evt_pt, delta_y, delta_phi, delta_phi_GEN, evt_mass2;
     void readMatrix() {
         string line;
         // Save acc&eff in arrays
@@ -284,7 +288,7 @@ void rephrase() {
     Double_t Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_y1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
     Double_t Jpsi_mass2, Jpsi_ctau2, Jpsi_pt2, Jpsi_y2;//, psi2S_sigLxy, psi2S_eta, psi2S_phi;
     Double_t evt_weight, evt_vtxProb;//, evt_d;
-    Double_t evt_mass, evt_y, evt_pt, delta_y, delta_phi, evt_mass2;
+    Double_t evt_mass, evt_y, evt_pt, delta_y, delta_phi, delta_phi_GEN, evt_mass2;
     // Set output tree SetBranchAddress address
     // outTree->Branch("mu_pt", &mu_pt);
     outTree->Branch("Jpsi_mass1", &Jpsi_mass1, "Jpsi_mass1/D");
@@ -310,6 +314,7 @@ void rephrase() {
     outTree->Branch("evt_pt", &evt_pt, "evt_pt/D");
     outTree->Branch("delta_y", &delta_y, "delta_y/D");
     outTree->Branch("delta_phi", &delta_phi, "delta_phi/D");
+    outTree->Branch("delta_phi_GEN", &delta_phi_GEN, "delta_phi_GEN/D");
     Double_t maxEvt_weight = 0;
     for(int i = 0; i < process.totEvent; i++) {
         // Change here to accommendate differential bins
@@ -337,6 +342,7 @@ void rephrase() {
         evt_pt = process.evt_pt[i];
         delta_y = process.delta_y[i];
         delta_phi = process.delta_phi[i];
+        delta_phi_GEN = process.delta_phi_GEN[i];
         if(process.evt_weight[i] > maxEvt_weight) maxEvt_weight = process.evt_weight[i];
         outTree->Fill();
     }

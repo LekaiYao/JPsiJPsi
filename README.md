@@ -20,11 +20,27 @@ differential fits, and summary plots.
 variables, applies acceptance/efficiency weights, and writes a flat tree named
 `data` in `Weight*.root`.
 
+`GEN_rephrase.cpp` is a preserved variant of `rephrase.cpp` that also reads
+`GEJpsi1_phi` and `GEJpsi2_phi` and writes `delta_phi_GEN` to the output tree.
+Use this variant when downstream plots need GEN-level delta-phi.
+
+`mix.cpp` randomly mixes LO and NLO ntuple events while preserving the original
+`rootuple/oniaTree` format. Its top-level settings define the LO/NLO input
+paths, `n_NLO`, the LO:NLO ratio `r`, the random seed, and the output file.
+
+Run the mixer from `NtupleAnalyzer/`:
+
+```bash
+root -l -b -q mix.cpp
+```
+
+Do not run it as `.L mix.cpp+` unless compiled ROOT artifacts are intended.
+
 `plot.cpp` reads one `Weight*.root` file and draws distributions into `plots/`.
 The main switches are at the top of the file:
 
 ```cpp
-const string inputFileName = "WeightSPS.root";
+const string inputFileName = "WeightSPS_GEN.root";
 const bool drawWeightComparison = false;
 ```
 
@@ -39,6 +55,7 @@ side. Current outputs include:
 - `plots/evtMass.png`
 - `plots/deltaY.png`
 - `plots/deltaPhi.png`
+- `plots/deltaPhiGEN.png` when the input tree contains `delta_phi_GEN`
 
 Run from `NtupleAnalyzer/`:
 
