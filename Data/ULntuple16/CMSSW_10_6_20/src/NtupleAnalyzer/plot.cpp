@@ -12,9 +12,9 @@ using namespace std;
 
 // I/O and behavior switches.
 // Change inputFileName to WeightDPS.root or WeightData.root when needed.
-const string inputFileName = "WeightSPS_GEN.root";
-const string outPlotDir = "plots/SPS_GEN/";
-const bool drawWeightComparison = false;  // false: weighted only; true: unweighted vs weighted.
+const string inputFileName = "WeightDPS.root";
+const string outPlotDir = "plots/DPS/";
+const bool drawWeightComparison = true;  // false: weighted only; true: unweighted vs weighted.
 
 void drawWeightedOnly(TH1D &weighted, const string &outName) {
     TCanvas canvas(("c_" + outName).c_str(), outName.c_str(), 1000, 800);
@@ -52,7 +52,7 @@ void plot() {
     // Define variables
     Double_t Jpsi_mass1, Jpsi_ctau1;
     Double_t Jpsi_mass2, Jpsi_ctau2;
-    Double_t evt_weight, evt_mass, delta_y, delta_phi, delta_phi_GEN;//, evt_d;
+    Double_t evt_weight, evt_mass, delta_y, delta_phi;
     inTree->SetBranchAddress("Jpsi_mass1", &Jpsi_mass1);
     inTree->SetBranchAddress("Jpsi_ctau1", &Jpsi_ctau1);
     inTree->SetBranchAddress("Jpsi_mass2", &Jpsi_mass2);
@@ -60,7 +60,6 @@ void plot() {
     inTree->SetBranchAddress("evt_mass", &evt_mass);
     inTree->SetBranchAddress("delta_y", &delta_y);
     inTree->SetBranchAddress("delta_phi", &delta_phi);
-    inTree->SetBranchAddress("delta_phi_GEN", &delta_phi_GEN);
     inTree->SetBranchAddress("evt_weight", &evt_weight);
     // Define histograms
     TH1D h_Jpsi_mass1("h_Jpsi_mass1", "Jpsi_mass_unweighted1", 50, 2.95, 3.25), wh_Jpsi_mass1("wh_Jpsi_mass1", "Jpsi_mass_weighted1", 50, 2.95, 3.25);
@@ -73,12 +72,10 @@ void plot() {
     wh_Jpsi_ctau2.Sumw2();
     TH1D h_evt_mass("h_evt_mass", "evt_mass_unweighted", 100, 7.5, 107.5), wh_evt_mass("wh_evt_mass", "evt_mass_weighted", 100, 7.5, 107.5);
     TH1D h_delta_y("h_delta_y", "delta_y_unweighted", 80, 0, 4.0), wh_delta_y("wh_delta_y", "delta_y_weighted", 80, 0, 4.0);
-    TH1D h_delta_phi("h_delta_phi", "delta_phi_unweighted", 80, 0, PI), wh_delta_phi("wh_delta_phi", "delta_phi_weighted", 80, 0, PI);
-    TH1D h_delta_phi_GEN("h_delta_phi_GEN", "delta_phi_GEN_unweighted", 80, 0, PI), wh_delta_phi_GEN("wh_delta_phi_GEN", "delta_phi_GEN_weighted", 80, 0, PI);
+    TH1D h_delta_phi("h_delta_phi", "delta_phi_unweighted", 40, 0, PI), wh_delta_phi("wh_delta_phi", "delta_phi_weighted", 40, 0, PI);//40 DPS,80 SPS
     wh_evt_mass.Sumw2();
     wh_delta_y.Sumw2();
     wh_delta_phi.Sumw2();
-    wh_delta_phi_GEN.Sumw2();
     int nEvent = inTree->GetEntries();
     for(int i = 0; i < nEvent; i++) {
         inTree->GetEntry(i);
@@ -94,8 +91,6 @@ void plot() {
         wh_delta_y.Fill(delta_y, evt_weight);
         h_delta_phi.Fill(delta_phi);
         wh_delta_phi.Fill(delta_phi, evt_weight);
-        h_delta_phi_GEN.Fill(delta_phi_GEN);
-        wh_delta_phi_GEN.Fill(delta_phi_GEN, evt_weight);
         h_evt_mass.Fill(evt_mass);
         wh_evt_mass.Fill(evt_mass, evt_weight);
     }
@@ -106,8 +101,7 @@ void plot() {
     savePlot(h_evt_mass, wh_evt_mass, "evtMass");
     savePlot(h_delta_y, wh_delta_y, "deltaY");
     savePlot(h_delta_phi, wh_delta_phi, "deltaPhi");
-    savePlot(h_delta_phi_GEN, wh_delta_phi_GEN, "deltaPhiGEN");
-
+    
     cout<<"Input file: "<<inputFileName<<endl;
     cout<<"Total events: "<<nEvent<<endl;
     cout<<"drawWeightComparison = "<<drawWeightComparison<<endl;

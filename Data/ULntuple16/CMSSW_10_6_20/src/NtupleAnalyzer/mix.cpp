@@ -28,7 +28,7 @@ string nloPrefix[N_NLO_DIR] = {""};
 string nloInfix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO/Ntuple_2016_SPSNLO";
 int nloSuffix[N_NLO_DIR] = {1};
 
-Long64_t n_NLO = 10000;
+Long64_t n_NLO = 100;
 Double_t r = 1.0;  // n_LO = n_NLO * r
 ULong64_t randomSeed = 20260505;
 string outFile = "Ntuple_2016_SPS_LO_NLO_mix.root";

@@ -12,8 +12,8 @@ using namespace std;
 // I/O settings area
 // Data
 // #define N_DIR 7
-// string prefix[N_DIR] = {"B", "C", "D", "E", "F", "G", "H"};
-// string infix = "/Ntuple_2016_";
+// string prefix[N_DIR] = {"B/Ntuple_2016_B", "C/Ntuple_2016_C", "D/Ntuple_2016_D", "E/Ntuple_2016_E", "F/Ntuple_2016_F", "G/Ntuple_2016_G", "H/Ntuple_2016_H"};
+// string infix = "/eos/home-c/chensh/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/";
 // int suffix[N_DIR] = {20, 9, 14, 3, 8, 29, 36};
 // string outFile = "WeightData.root";
 // SPS LO
@@ -29,17 +29,23 @@ using namespace std;
 // int suffix[N_DIR] = {1};
 // string outFile = "WeightSPSNLO_GEN.root";
 // SPS
-#define N_DIR 1
-string prefix[N_DIR] = {""};
-string infix = "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/Ntuple_2016_SPS";
-int suffix[N_DIR] = {1};
-string outFile = "WeightSPS_GEN.root";
-// DPS
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
-// string infix = "/eos/home-c/chensh/JPsiPsi2s/SKIM_tightfilter/DPS/ULPythia2018/CMSSW_10_2_5/src/4mu_acc_eff/pTHat4/Ntuple_2018_DPS";//Ntuple/Ntuple_2018_DPS";
-// int suffix[N_DIR] = {40};//{25};
-// string outFile = "WeightDPS.root";
+// string infix = "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/Ntuple_2016_SPS";
+// int suffix[N_DIR] = {10};
+// string outFile = "WeightSPS_pythia.root";
+// SPS mix direct
+// #define N_DIR 1
+// string prefix[N_DIR] = {""};
+// string infix = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/SPS_add_NLO_pythia";
+// int suffix[N_DIR] = {1};
+// string outFile = "WeightSPS.root";
+// DPS
+#define N_DIR 1
+string prefix[N_DIR] = {""};
+string infix = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/DPS_ntuple/Ntuple_2016_DPS";//Ntuple/Ntuple_2018_DPS";
+int suffix[N_DIR] = {15};//{25};
+string outFile = "WeightDPS.root";
 // Bdecay
 // #define N_DIR 2
 // string prefix[N_DIR] = {"", ""};
@@ -263,7 +269,7 @@ class Process {
     void loopOn() {
         for(int i = 0; i < N_DIR; i++) {
             for(int j = 1; j <= suffix[i]; j++) {
-                string fileName = prefix[i] + infix + prefix[i] + "_" + to_string(j) + ".root";
+                string fileName = infix + prefix[i] + "_" + to_string(j) + ".root";
                 // string dir = "/eos/home-c/chensh/Data2018/A/Charmonium/2018A_Ntuple_chensh_v1/251210_052421/0000";
                 // string fileName = dir + infix + prefix[i] + "_" + to_string(j) + ".root";
                 // string fileName = prefix[i] + infix + subinfix[i] + "_" + to_string(j) + ".root";// For Bdecay

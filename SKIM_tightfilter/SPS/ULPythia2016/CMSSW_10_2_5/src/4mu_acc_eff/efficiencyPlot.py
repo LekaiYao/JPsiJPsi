@@ -15,7 +15,7 @@ if not os.path.exists(outPlotDir):
     os.system("mkdir " + outPlotDir)
 
 # Handle input files and extract trees.
-inFileDir = "./"
+inFileDir = "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/"
 inFileList = ["Ntuple_2016_SPS_{}.root".format(i) for i in range(1, 11)]
 inFiles = {}
 inTrees = []

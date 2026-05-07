@@ -8,118 +8,244 @@
 #include "RooPlot.h"
 #include "RooAddPdf.h"
 #include "RooArgList.h"
-#include "RooFitResult.h"
 #include "RooDataHist.h"
 #include "RooHistPdf.h"
 #include "RooCategory.h"
 #include "RooSimultaneous.h"
+#include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <map>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace RooFit;
 
-constexpr long double operator"" _PI(long double f) {
-    return 3.14159265359 * f;
-}
 double combError(double sys1, double sys2, double sys3, double sys4) {
     return sqrt(sys1 * sys1 + sys2 * sys2 + sys3 * sys3 + sys4 * sys4);
 }
-void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dhSPS, RooDataHist *dhDPS, double frac, double n_sps_dps) {
-    TCanvas *canvas = new TCanvas("canvas", "canvas", 1500, 1300);
-    RooPlot* frame = var.frame();
-    RooHistFunc func_SPS("func_SPS", "func_SPS", var, *dhSPS), func_DPS("func_DPS", "func_DPS", var, *dhDPS);
-    RooRealVar coef_SPS("coef_SPS", "coef_SPS", frac * n_sps_dps);
-    RooRealVar coef_DPS("coef_DPS", "coef_DPS", (1 - frac) * n_sps_dps);
-    RooRealSumFunc func("func", "func", {func_SPS, func_DPS}, {coef_SPS, coef_DPS});
+
+bool parseRangeLine(const string &line, string &var, double &xmin, double &xmax) {
+    size_t colon = line.find(':');
+    size_t tilde = line.find('~');
+    if(colon == string::npos || tilde == string::npos || tilde < colon) return false;
+    var = line.substr(0, colon);
+    xmin = atof(line.substr(colon + 1, tilde - colon - 1).c_str());
+    xmax = atof(line.substr(tilde + 1).c_str());
+    return true;
+}
+
+bool parseYieldLine(const string &line, double &xSec, double &sta, double &sys4MaxAbsFrac) {
+    if(line.find("Event yield:") != 0) return false;
+    size_t posYield = line.find(':');
+    size_t posPlus = line.find("+/-");
+    size_t posSta = line.find("(Sta.)");
+    if(posYield == string::npos || posPlus == string::npos || posSta == string::npos) return false;
+    xSec = atof(line.substr(posYield + 1, posPlus - posYield - 1).c_str());
+    sta = atof(line.substr(posPlus + 3, posSta - (posPlus + 3)).c_str());
+    double maxAbs = 0.0;
+    size_t start = posSta;
+    for(int k = 0; k < 3; k++) {
+        size_t pct = line.find('%', start);
+        if(pct == string::npos) return false;
+        size_t comma = line.rfind(',', pct);
+        size_t valStart = (comma == string::npos) ? start : comma + 1;
+        double v = atof(line.substr(valStart, pct - valStart).c_str());
+        maxAbs = max(maxAbs, fabs(v));
+        start = pct + 1;
+    }
+    sys4MaxAbsFrac = maxAbs / 100.0;
+    return true;
+}
+
+void plot_temp(const string &name, RooRealVar &var, RooDataHist *dh, RooDataHist *dhSPS, RooDataHist *dhDPS, double frac, double nTot) {
+    TCanvas *canvas = new TCanvas(("c_" + name).c_str(), ("c_" + name).c_str(), 1500, 1300);
+    RooPlot *frame = var.frame();
+    RooHistFunc funcSPS(("funcSPS_" + name).c_str(), ("funcSPS_" + name).c_str(), var, *dhSPS);
+    RooHistFunc funcDPS(("funcDPS_" + name).c_str(), ("funcDPS_" + name).c_str(), var, *dhDPS);
+    RooRealVar coefSPS(("coefSPS_" + name).c_str(), ("coefSPS_" + name).c_str(), frac * nTot);
+    RooRealVar coefDPS(("coefDPS_" + name).c_str(), ("coefDPS_" + name).c_str(), (1.0 - frac) * nTot);
+    RooRealSumFunc func(("func_" + name).c_str(), ("func_" + name).c_str(), {funcSPS, funcDPS}, {coefSPS, coefDPS});
     dh->plotOn(frame, Name("Data"));
-    func.plotOn(frame, LineColor(kBlack), Name("All")); 
-    func_SPS.plotOn(frame, Normalization(coef_SPS.getVal()), LineColor(kBlue), LineStyle(kDashed), Name("SPS"));
-    func_DPS.plotOn(frame, Normalization(coef_DPS.getVal()), LineColor(kRed), LineStyle(kDotted), Name("DPS"));
+    func.plotOn(frame, LineColor(kBlack), Name("All"));
+    funcSPS.plotOn(frame, Normalization(coefSPS.getVal()), LineColor(kBlue), LineStyle(kDashed), Name("SPS"));
+    funcDPS.plotOn(frame, Normalization(coefDPS.getVal()), LineColor(kRed), LineStyle(kDotted), Name("DPS"));
     TLegend *legend = new TLegend(.65, .60, .85, .85);
-    legend->AddEntry(frame->findObject("Data"), "RunII 2018", "L");
+    legend->AddEntry(frame->findObject("Data"), "Data xSec", "L");
     legend->AddEntry(frame->findObject("All"), "Total p.d.f.", "L");
     legend->AddEntry(frame->findObject("SPS"), "SPS p.d.f.", "L");
     legend->AddEntry(frame->findObject("DPS"), "DPS p.d.f.", "L");
-    frame->SetXTitle(varName.c_str());
-    frame->SetYTitle(("d#sigma/d(" + varName + ")").c_str());
+    frame->SetXTitle(var.GetName());
+    frame->SetYTitle((string("d#sigma/d(") + var.GetName() + ")").c_str());
     frame->Draw();
     legend->DrawClone();
-    canvas->SaveAs(("fig/temp/Template_" + varName + ".png").c_str());
+    canvas->SaveAs(("fig/temp2/Template_" + name + ".png").c_str());
 }
+
 void Tpl_Fit() {
-    // Names of kinematic variables
     const int varNum = 5;
     const string varName[] = {"delta_y", "delta_phi", "evt_mass", "evt_y", "evt_pt"};
-    // Binning configurations
-    const int binNum[] = {6, 8, 7, 5, 9};
-    const vector<vector<double>> bins = {
-        {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 4.0},
-        {0.0_PI, 0.125_PI, 0.25_PI, 0.375_PI, 0.5_PI, 0.625_PI, 0.75_PI, 0.875_PI, 1.0_PI},
-        {7.5, 17.5, 27.5, 37.5, 47.5, 57.5, 67.5, 107.5},
-        {0.0, 0.4, 0.8, 1.2, 1.6, 2.0},
-        {0, 5, 10, 15, 20, 25, 30, 35, 40, 80}
-    };
-    // Differential cross sections(event yield)
-    vector<vector<double>> xSec = {
-        {2693.07, 897.703, 540.821, 428.172, 285.705, 213.566},
-        {1374.97, 794.097, 232.649, 357.403, 303.331, 347.662, 651.977, 1041.69},
-        {916.264, 907.639, 1143.22, 836.383, 436.256, 175.983, 179.425},
-        {1300.21, 1365.8, 1318.3, 794.153, 263.802},
-        {678.57, 696.301, 574.91, 334.685, 1169.18, 835.068, 286.57, 237.961, 284.646}
-    };
-    // Statistical uncertainties(error of event yield)
-    vector<vector<double>> sta = {
-        {55.546, 33.2241, 26.6067, 23.8414, 19.3493, 16.9672},
-        {38.8299, 30.0436, 17.0393, 20.5816, 19.1955, 21.0125, 28.8214, 36.9809},
-        {33.2635, 32.3605, 37.5913, 31.8681, 22.7294, 15.3576, 14.8315},
-        {40.2643, 40.9217, 39.7716, 30.4744, 17.9819},
-        {28.7697, 30.4292, 26.7814, 20.8368, 36.4629, 31.4697, 18.0875, 16.4044, 18.0145}
-    };
+    vector<vector<double>> bins(varNum), xSec(varNum), sta(varNum), sys4(varNum);
+
+    ifstream inFile("log.txt");
+    if(!inFile.is_open()) {
+        cout<<"Cannot open log.txt"<<endl;
+        return;
+    }
+    string line, curVar;
+    double curMin = 0, curMax = 0;
+    while(getline(inFile, line)) {
+        if(line.empty()) continue;
+        string parsedVar;
+        double xmin = 0, xmax = 0;
+        if(parseRangeLine(line, parsedVar, xmin, xmax)) {
+            curVar = parsedVar;
+            curMin = xmin;
+            curMax = xmax;
+            continue;
+        }
+        double y = 0, s = 0, sys4max = 0;
+        if(!parseYieldLine(line, y, s, sys4max)) continue;
+        int idx = -1;
+        for(int i = 0; i < varNum; i++) if(curVar == varName[i]) idx = i;
+        if(idx < 0) continue;
+        if(bins[idx].empty()) bins[idx].push_back(curMin);
+        bins[idx].push_back(curMax);
+        xSec[idx].push_back(y);
+        sta[idx].push_back(s);
+        sys4[idx].push_back(sys4max);
+    }
+    inFile.close();
+
+    vector<int> binNum(varNum, 0);
     for(int i = 0; i < varNum; i++) {
-        for(int j = 0; j < binNum[i]; j++) {
-            double x = 1e-3 / (36.3 * 0.05961 * 0.05961) / (bins[i][j + 1] - bins[i][j]);
-            xSec[i][j] *= x;
-            sta[i][j] *= x;
+        binNum[i] = (int)xSec[i].size();
+        if(binNum[i] == 0 || (int)bins[i].size() != binNum[i] + 1 || (int)sta[i].size() != binNum[i] || (int)sys4[i].size() != binNum[i]) {
+            cout<<"Invalid or incomplete data for "<<varName[i]<<endl;
+            return;
         }
     }
-    // Systematic uncertainties(in percentage)
+
     const double sys1 = 0.015, sys2 = 0.026;
-    const vector<vector<double>> sys3 = {
-        {0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0}
-    }, sys4 = {
-        {0.0125, 0.0359, 0.0492, 0.0239, 0.0973, 0.1003},
-        {0.0162, 0.04378, 0.0778, 0.1242, 0.077, 0.0483, 0.0493, 0.0212},
-        {0.0594, 0.039, 0.0293, 0.0681, 0.0402, 0.1205, 0.101},
-        {0.0499, 0.0138, 0.0349, 0.0473, 0.0965},
-        {0.0983, 0.0523, 0.0653, 0.0399, 0.0128, 0.0947, 0.091, 0.077, 0.1225}
-    };
-    // Loop on all kinematic variables
+    vector<vector<double>> sys3(varNum);
+    for(int i = 0; i < varNum; i++) sys3[i].assign(binNum[i], 0.0);
     for(int i = 0; i < varNum; i++) {
-        // Draw distribution only, with statistical and systematic errors separated
-        TH1D *h1 = new TH1D(("d_" + varName[i]).c_str(), ("d_" + varName[i]).c_str(), binNum[i], bins[i].data());
-        TH1D *h2 = new TH1D(("e_" + varName[i]).c_str(), ("e_" + varName[i]).c_str(), binNum[i], bins[i].data());
         for(int j = 0; j < binNum[i]; j++) {
-            h1->Fill(bins[i][j] + 0.01, xSec[i][j]);
-            h1->SetBinError(j + 1, sta[i][j]);
-            h2->Fill(bins[i][j] + 0.01, xSec[i][j]);
-            h2->SetBinError(j + 1, sta[i][j] + xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j]));
+            double scale = 1e-3 / (36.3 * 0.05961 * 0.05961) / (bins[i][j + 1] - bins[i][j]);
+            xSec[i][j] *= scale;
+            sta[i][j] *= scale;
         }
-        TCanvas *canvas2 = new TCanvas("canvas2", "canvas2", 1000, 1000);
-        h1->SetMarkerSize(0.);
-        h1->SetFillStyle(3003);
-        h1->SetMarkerColor(kRed);
-        h1->SetFillColor(kRed);
-        h1->GetYaxis()->SetRangeUser(0, 1.2 * h1->GetMaximum());
-        h1->GetXaxis()->SetTitle(varName[i].c_str());
-        h1->GetYaxis()->SetTitle(("d#sigma/d(" + varName[i] + ")").c_str());
-        h1->SetStats(0);
-        h1->Draw("e2");
-        h2->SetStats(0);
-        h2->Draw("same");
-        canvas2->SaveAs(("fig/temp/Xsec_" + varName[i] + ".png").c_str());
     }
-    return;
+
+    TFile spsFile("WeightSPS.root", "READ"), dpsFile("WeightDPS.root", "READ");
+    TTree *spsTree = (TTree *)spsFile.Get("data"), *dpsTree = (TTree *)dpsFile.Get("data");
+    if(!spsTree || !dpsTree) {
+        cout<<"Cannot find tree data in WeightSPS.root or WeightDPS.root"<<endl;
+        return;
+    }
+
+    const int fitIdx[2] = {0, 1}; // delta_y, delta_phi
+    RooRealVar *var[2];
+    TH1D *hData[2], *hSPS[2], *hDPS[2];
+    RooDataHist *dhData[2], *dhSPS[2], *dhDPS[2];
+    RooHistPdf *pdfSPS[2], *pdfDPS[2];
+    double fSPS1D[2] = {0, 0};
+
+    for(int k = 0; k < 2; k++) {
+        int i = fitIdx[k];
+        var[k] = new RooRealVar(varName[i].c_str(), varName[i].c_str(), bins[i][0], bins[i][binNum[i]]);
+        hData[k] = new TH1D(("hData_" + varName[i]).c_str(), ("hData_" + varName[i]).c_str(), binNum[i], bins[i].data());
+        hSPS[k] = new TH1D(("hSPS_" + varName[i]).c_str(), ("hSPS_" + varName[i]).c_str(), binNum[i], bins[i].data());
+        hDPS[k] = new TH1D(("hDPS_" + varName[i]).c_str(), ("hDPS_" + varName[i]).c_str(), binNum[i], bins[i].data());
+
+        for(int j = 0; j < binNum[i]; j++) {
+            hData[k]->Fill(bins[i][j] + 0.01, xSec[i][j]);
+            double sysAbs = xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j]);
+            hData[k]->SetBinError(j + 1, sqrt(sta[i][j] * sta[i][j] + sysAbs * sysAbs));
+        }
+        dhData[k] = new RooDataHist(("dhData_" + varName[i]).c_str(), ("dhData_" + varName[i]).c_str(), *var[k], hData[k]);
+
+        Double_t vSPS = 0, wSPS = 0, vDPS = 0, wDPS = 0;
+        spsTree->SetBranchAddress(varName[i].c_str(), &vSPS);
+        spsTree->SetBranchAddress("evt_weight", &wSPS);
+        dpsTree->SetBranchAddress(varName[i].c_str(), &vDPS);
+        dpsTree->SetBranchAddress("evt_weight", &wDPS);
+
+        double sumSPS = 0, sumDPS = 0;
+        Long64_t nSPS = spsTree->GetEntries(), nDPS = dpsTree->GetEntries();
+        for(Long64_t j = 0; j < nSPS; j++) {
+            spsTree->GetEntry(j);
+            if(vSPS < bins[i][0] || vSPS > bins[i][binNum[i]]) continue;
+            int pos = upper_bound(bins[i].begin(), bins[i].end(), vSPS) - bins[i].begin();
+            double bwInv = 1.0 / (bins[i][pos] - bins[i][pos - 1]);
+            hSPS[k]->Fill(vSPS, wSPS * bwInv);
+            sumSPS += wSPS * bwInv;
+        }
+        for(Long64_t j = 0; j < nDPS; j++) {
+            dpsTree->GetEntry(j);
+            if(vDPS < bins[i][0] || vDPS > bins[i][binNum[i]]) continue;
+            int pos = upper_bound(bins[i].begin(), bins[i].end(), vDPS) - bins[i].begin();
+            double bwInv = 1.0 / (bins[i][pos] - bins[i][pos - 1]);
+            hDPS[k]->Fill(vDPS, wDPS * bwInv);
+            sumDPS += wDPS * bwInv;
+        }
+        if(sumSPS > 0) hSPS[k]->Scale(1.0 / sumSPS);
+        if(sumDPS > 0) hDPS[k]->Scale(1.0 / sumDPS);
+
+        dhSPS[k] = new RooDataHist(("dhSPS_" + varName[i]).c_str(), ("dhSPS_" + varName[i]).c_str(), *var[k], hSPS[k]);
+        dhDPS[k] = new RooDataHist(("dhDPS_" + varName[i]).c_str(), ("dhDPS_" + varName[i]).c_str(), *var[k], hDPS[k]);
+        pdfSPS[k] = new RooHistPdf(("pdfSPS_" + varName[i]).c_str(), ("pdfSPS_" + varName[i]).c_str(), *var[k], *dhSPS[k]);
+        pdfDPS[k] = new RooHistPdf(("pdfDPS_" + varName[i]).c_str(), ("pdfDPS_" + varName[i]).c_str(), *var[k], *dhDPS[k]);
+
+        RooRealVar frac(("frac_1D_" + varName[i]).c_str(), ("frac_1D_" + varName[i]).c_str(), 0.5, 0, 1);
+        RooRealVar nAll(("n_1D_" + varName[i]).c_str(), ("n_1D_" + varName[i]).c_str(), 100, 1, 1e6);
+        RooAddPdf mixPdf(("mix_1D_" + varName[i]).c_str(), ("mix_1D_" + varName[i]).c_str(), RooArgList(*pdfSPS[k], *pdfDPS[k]), frac);
+        RooExtendPdf extPdf(("ext_1D_" + varName[i]).c_str(), ("ext_1D_" + varName[i]).c_str(), mixPdf, nAll);
+        extPdf.fitTo(*dhData[k]);
+        fSPS1D[k] = frac.getVal();
+        plot_temp(varName[i] + "_1D", *var[k], dhData[k], dhSPS[k], dhDPS[k], frac.getVal(), nAll.getVal());
+    }
+
+    RooCategory cate("cate", "cate");
+    cate.defineType("delta_y");
+    cate.defineType("delta_phi");
+    RooArgList vars;
+    vars.add(*var[0]);
+    vars.add(*var[1]);
+    map<string, RooDataHist*> hMap;
+    hMap["delta_y"] = dhData[0];
+    hMap["delta_phi"] = dhData[1];
+    RooDataHist combData("combData", "combData", vars, cate, hMap);
+
+    RooRealVar frac2D("frac2D", "frac2D", 0.5, 0, 1);
+    RooRealVar nDY("nDY", "nDY", 100, 1, 1e6), nDPhi("nDPhi", "nDPhi", 100, 1, 1e6);
+    RooAddPdf pdfDY("pdfDY", "pdfDY", RooArgList(*pdfSPS[0], *pdfDPS[0]), frac2D);
+    RooAddPdf pdfDPhi("pdfDPhi", "pdfDPhi", RooArgList(*pdfSPS[1], *pdfDPS[1]), frac2D);
+    RooExtendPdf extDY("extDY", "extDY", pdfDY, nDY), extDPhi("extDPhi", "extDPhi", pdfDPhi, nDPhi);
+    RooSimultaneous simPdf("simPdf", "simPdf", cate);
+    simPdf.addPdf(extDY, "delta_y");
+    simPdf.addPdf(extDPhi, "delta_phi");
+    simPdf.fitTo(combData);
+
+    const double fSPS2D = frac2D.getVal();
+    plot_temp("delta_y_2D", *var[0], dhData[0], dhSPS[0], dhDPS[0], fSPS2D, nDY.getVal());
+    plot_temp("delta_phi_2D", *var[1], dhData[1], dhSPS[1], dhDPS[1], fSPS2D, nDPhi.getVal());
+
+    double relSys = 0.0;
+    if(fSPS2D != 0.0) {
+        relSys = max(fabs(fSPS2D - fSPS1D[0]), fabs(fSPS2D - fSPS1D[1])) / fabs(fSPS2D);
+    }
+
+    ofstream out("fig/temp2/fSPS_summary.txt");
+    out<<"f_SPS_2D = "<<fSPS2D<<"\n";
+    out<<"f_SPS_1D_delta_y = "<<fSPS1D[0]<<"\n";
+    out<<"f_SPS_1D_delta_phi = "<<fSPS1D[1]<<"\n";
+    out<<"relative_sys = "<<relSys<<"\n";
+    out.close();
+
+    cout<<"f_SPS_2D = "<<fSPS2D<<endl;
+    cout<<"f_SPS_1D_delta_y = "<<fSPS1D[0]<<endl;
+    cout<<"f_SPS_1D_delta_phi = "<<fSPS1D[1]<<endl;
+    cout<<"relative_sys = "<<relSys<<endl;
 }

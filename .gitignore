@@ -9,6 +9,9 @@
 
 # Logs and runtime outputs
 *.log
+*log*
+*txt*
+*.txt
 *.out
 *.err
 *.tmp
