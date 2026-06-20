@@ -50,9 +50,9 @@ void plot() {
         return;
     }
     // Define variables
-    Double_t Jpsi_mass1, Jpsi_ctau1;
-    Double_t Jpsi_mass2, Jpsi_ctau2;
-    Double_t evt_weight, evt_mass, delta_y, delta_phi;
+    Double_t Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_Z1;
+    Double_t Jpsi_mass2, Jpsi_ctau2, Jpsi_pt2;
+    Double_t evt_weight, evt_mass, delta_y, delta_phi, evt_Z, vtx_Z;
     inTree->SetBranchAddress("Jpsi_mass1", &Jpsi_mass1);
     inTree->SetBranchAddress("Jpsi_ctau1", &Jpsi_ctau1);
     inTree->SetBranchAddress("Jpsi_mass2", &Jpsi_mass2);
@@ -61,6 +61,11 @@ void plot() {
     inTree->SetBranchAddress("delta_y", &delta_y);
     inTree->SetBranchAddress("delta_phi", &delta_phi);
     inTree->SetBranchAddress("evt_weight", &evt_weight);
+    inTree->SetBranchAddress("Jpsi_pt1", &Jpsi_pt1);
+    inTree->SetBranchAddress("Jpsi_pt2", &Jpsi_pt2);
+    inTree->SetBranchAddress("Jpsi_Z1", &Jpsi_Z1);
+    inTree->SetBranchAddress("evt_Z", &evt_Z);
+    inTree->SetBranchAddress("vtx_Z", &vtx_Z);
     // Define histograms
     TH1D h_Jpsi_mass1("h_Jpsi_mass1", "Jpsi_mass_unweighted1", 50, 2.95, 3.25), wh_Jpsi_mass1("wh_Jpsi_mass1", "Jpsi_mass_weighted1", 50, 2.95, 3.25);
     TH1D h_Jpsi_mass2("h_Jpsi_mass2", "Jpsi_mass_unweighted2", 50, 2.95, 3.25), wh_Jpsi_mass2("wh_Jpsi_mass2", "Jpsi_mass_weighted2", 50, 2.95, 3.25);
@@ -76,6 +81,16 @@ void plot() {
     wh_evt_mass.Sumw2();
     wh_delta_y.Sumw2();
     wh_delta_phi.Sumw2();
+    TH1D h_Jpsi_pt1("h_Jpsi_pt1", "Jpsi_pt_unweighted1", 50, 10, 40), wh_Jpsi_pt1("wh_Jpsi_pt1", "Jpsi_pt_weighted1", 50, 10, 40);
+    TH1D h_Jpsi_pt2("h_Jpsi_pt2", "Jpsi_pt_unweighted2", 50, 10, 40), wh_Jpsi_pt2("wh_Jpsi_pt2", "Jpsi_pt_weighted2", 50, 10, 40);
+    TH1D h_Jpsi_Z1("h_Jpsi_Z1", "Jpsi_Z_unweighted1", 50, -10, 10), wh_Jpsi_Z1("wh_Jpsi_Z1", "Jpsi_Z_weighted1", 50, -10, 10);
+    TH1D h_evt_Z("h_evt_Z", "evt_Z_unweighted", 50, -10, 10), wh_evt_Z("wh_evt_Z", "evt_Z_weighted", 50, -10, 10);
+    TH1D h_vtx_Z("h_vtx_Z", "vtx_Z_unweighted", 50, -10, 10), wh_vtx_Z("wh_vtx_Z", "vtx_Z_weighted", 50, -10, 10);
+    wh_Jpsi_pt1.Sumw2();
+    wh_Jpsi_pt2.Sumw2();
+    wh_Jpsi_Z1.Sumw2();
+    wh_evt_Z.Sumw2();
+    wh_vtx_Z.Sumw2();
     int nEvent = inTree->GetEntries();
     for(int i = 0; i < nEvent; i++) {
         inTree->GetEntry(i);
@@ -93,6 +108,16 @@ void plot() {
         wh_delta_phi.Fill(delta_phi, evt_weight);
         h_evt_mass.Fill(evt_mass);
         wh_evt_mass.Fill(evt_mass, evt_weight);
+        h_Jpsi_pt1.Fill(Jpsi_pt1);
+        wh_Jpsi_pt1.Fill(Jpsi_pt1, evt_weight);
+        h_Jpsi_pt2.Fill(Jpsi_pt2);
+        wh_Jpsi_pt2.Fill(Jpsi_pt2, evt_weight);
+        h_Jpsi_Z1.Fill(Jpsi_Z1);
+        wh_Jpsi_Z1.Fill(Jpsi_Z1, evt_weight);
+        h_evt_Z.Fill(evt_Z);
+        wh_evt_Z.Fill(evt_Z, evt_weight);
+        h_vtx_Z.Fill(vtx_Z);
+        wh_vtx_Z.Fill(vtx_Z, evt_weight);
     }
     savePlot(h_Jpsi_mass1, wh_Jpsi_mass1, "JpsiMass1");
     savePlot(h_Jpsi_mass2, wh_Jpsi_mass2, "JpsiMass2");
@@ -101,7 +126,12 @@ void plot() {
     savePlot(h_evt_mass, wh_evt_mass, "evtMass");
     savePlot(h_delta_y, wh_delta_y, "deltaY");
     savePlot(h_delta_phi, wh_delta_phi, "deltaPhi");
-    
+    savePlot(h_Jpsi_pt1, wh_Jpsi_pt1, "JpsiPt1");
+    savePlot(h_Jpsi_pt2, wh_Jpsi_pt2, "JpsiPt2");
+    savePlot(h_Jpsi_Z1, wh_Jpsi_Z1, "JpsiZ1");
+    savePlot(h_evt_Z, wh_evt_Z, "evtZ");
+    savePlot(h_vtx_Z, wh_vtx_Z, "vtxZ");
+
     cout<<"Input file: "<<inputFileName<<endl;
     cout<<"Total events: "<<nEvent<<endl;
     cout<<"drawWeightComparison = "<<drawWeightComparison<<endl;

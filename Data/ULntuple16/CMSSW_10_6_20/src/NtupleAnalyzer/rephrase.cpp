@@ -40,6 +40,12 @@ string prefix[N_DIR] = {""};
 string infix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/Ntuple_2016_SPSstar";
 int suffix[N_DIR] = {1};
 string outFile = "WeightSPSstar.root";
+// NLO (upstream chensh HELAC-Onia samples; commented option)
+// #define N_DIR 1
+// string prefix[N_DIR] = {""};
+// string infix = "/eos/home-c/chensh/JPsiPsi2s/HELAC_Onia/condorIO/JJSPS/ntuple/HO2016_Ntuple";
+// int suffix[N_DIR] = {116};
+// string outFile = "WeightNLO.root";
 // SPS mix direct
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
@@ -81,12 +87,13 @@ class Process {
         // Handle root file
         TFile file(fileName.c_str(), "READ");
         TTree *inTree = (TTree *)file.Get("rootuple/oniaTree");
+        if(!inTree) return;
         int nEvent = inTree->GetEntries();
         // Define input tree variables
         vector<Double_t> *REmu_pt = 0;
-        vector<Double_t> *REJpsi_pt = 0, *REJpsi_eta = 0, *REJpsi_y = 0, *REJpsi_phi = 0, *REJpsi_mass = 0, *REJpsi_ctau = 0;//, *REJpsi_sigLxy = 0;
+        vector<Double_t> *REJpsi_pt = 0, *REJpsi_eta = 0, *REJpsi_y = 0, *REJpsi_phi = 0, *REJpsi_mass = 0, *REJpsi_ctau = 0, *REJpsi_Z = 0;//, *REJpsi_sigLxy = 0;
         vector<int> *REJpsi_muId1 = 0;//, *REJpsi_muId2 = 0;
-        vector<Double_t> *REevt_fourMuMass = 0, *REevt_vtxProb = 0;//, *REevt_d = 0, *REevt_L1muPtMax = 0;
+        vector<Double_t> *REevt_fourMuMass = 0, *REevt_vtxProb = 0, *REvtx_Z = 0, *REevt_Z = 0;//, *REevt_d = 0, *REevt_L1muPtMax = 0;
         vector<int> *REevt_JpsiId1 = 0, *REevt_JpsiId2 = 0;
         vector<bool> *REevt_matchTrg = 0, *REevt_passHLT = 0, *REevt_fourMuFit = 0, *REevt_samePV = 0;
         // Set input tree SetBranchAddress address
@@ -97,11 +104,14 @@ class Process {
         inTree->SetBranchAddress("REJpsi_phi", &REJpsi_phi);
         inTree->SetBranchAddress("REJpsi_mass", &REJpsi_mass);
         inTree->SetBranchAddress("REJpsi_ctau", &REJpsi_ctau);
+        inTree->SetBranchAddress("REJpsi_Z", &REJpsi_Z);
         // inTree->SetBranchAddress("REJpsi_sigLxy", &REJpsi_sigLxy);
         inTree->SetBranchAddress("REJpsi_muId1", &REJpsi_muId1);
         // inTree->SetBranchAddress("REJpsi_muId2", &REJpsi_muId2);
         inTree->SetBranchAddress("REevt_fourMuMass", &REevt_fourMuMass);
         inTree->SetBranchAddress("REevt_vtxProb", &REevt_vtxProb);
+        inTree->SetBranchAddress("REvtx_Z", &REvtx_Z);
+        inTree->SetBranchAddress("REevt_Z", &REevt_Z);
         // inTree->SetBranchAddress("REevt_d", &REevt_d);
         inTree->SetBranchAddress("REevt_JpsiId1", &REevt_JpsiId1);
         inTree->SetBranchAddress("REevt_JpsiId2", &REevt_JpsiId2);
@@ -166,6 +176,7 @@ class Process {
                 // Jpsi_sigLxy.push_back(REJpsi_sigLxy->at(JpsiId));
                 Jpsi_pt1.push_back(REJpsi_pt->at(JpsiId1));
                 Jpsi_y1.push_back(REJpsi_y->at(JpsiId1));
+                Jpsi_Z1.push_back(REJpsi_Z->at(JpsiId1));
                 // Jpsi_eta.push_back(REJpsi_eta->at(JpsiId));
                 // Jpsi_phi.push_back(REJpsi_phi->at(JpsiId));
                 Jpsi_mass2.push_back(REJpsi_mass->at(JpsiId2));
@@ -177,6 +188,8 @@ class Process {
                 // psi2S_phi.push_back(REpsi2S_phi->at(psi2SId));
                 // // evt_d.push_back(REevt_d->at(j));
                 evt_vtxProb.push_back(REevt_vtxProb->at(j));
+                evt_Z.push_back(REevt_Z->at(j));
+                vtx_Z.push_back(REvtx_Z->at(0));
                 evt_weight.push_back(calWeight(REJpsi_pt->at(JpsiId1), REJpsi_y->at(JpsiId1), REJpsi_pt->at(JpsiId2), REJpsi_y->at(JpsiId2)));
                 // // evt_weight.push_back(calWeight(REJpsi_pt->at(JpsiId), REJpsi_eta->at(JpsiId), REpsi2S_pt->at(psi2SId), REpsi2S_eta->at(psi2SId)));
                 totEvent++;
@@ -195,9 +208,9 @@ class Process {
     public:
     int totEvent = 0, hltEvent = 0, vtxEvent = 0, totEntry = 0;
     // vector<vector<Double_t>> mu_pt;
-    vector<Double_t> Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_y1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
+    vector<Double_t> Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_y1, Jpsi_Z1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
     vector<Double_t> Jpsi_mass2, Jpsi_ctau2, Jpsi_pt2, Jpsi_y2;//, psi2S_sigLxy, psi2S_eta, psi2S_phi;
-    vector<Double_t> evt_weight, evt_vtxProb;//, evt_d;
+    vector<Double_t> evt_weight, evt_vtxProb, evt_Z, vtx_Z;//, evt_d;
     vector<Double_t> evt_mass, evt_y, evt_pt, delta_y, delta_phi, evt_mass2;
     void readMatrix() {
         string line;
@@ -232,7 +245,7 @@ class Process {
             lineCnt++;
         }
         accFile.close();
-        ifstream effFile("efficiency_2SPS+DPS.txt");
+        ifstream effFile("efficiency_0_0.6.txt");
         if(!effFile.is_open()) return;
         int eff_ptBin = 0, eff_yBin = 0;
         lineCnt = 0;
@@ -293,9 +306,9 @@ void rephrase() {
     TTree *outTree = new TTree("data", "data");
     // Define output tree variables
     // vector<Double_t> mu_pt;
-    Double_t Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_y1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
+    Double_t Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_y1, Jpsi_Z1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
     Double_t Jpsi_mass2, Jpsi_ctau2, Jpsi_pt2, Jpsi_y2;//, psi2S_sigLxy, psi2S_eta, psi2S_phi;
-    Double_t evt_weight, evt_vtxProb;//, evt_d;
+    Double_t evt_weight, evt_vtxProb, evt_Z, vtx_Z;//, evt_d;
     Double_t evt_mass, evt_y, evt_pt, delta_y, delta_phi, evt_mass2;
     // Set output tree SetBranchAddress address
     // outTree->Branch("mu_pt", &mu_pt);
@@ -304,6 +317,7 @@ void rephrase() {
     // outTree->Branch("Jpsi_sigLxy", &Jpsi_sigLxy, "Jpsi_sigLxy/D");
     outTree->Branch("Jpsi_pt1", &Jpsi_pt1, "Jpsi_pt1/D");
     outTree->Branch("Jpsi_y1", &Jpsi_y1, "Jpsi_y1/D");
+    outTree->Branch("Jpsi_Z1", &Jpsi_Z1, "Jpsi_Z1/D");
     // outTree->Branch("Jpsi_eta", &Jpsi_eta, "Jpsi_eta/D");
     // outTree->Branch("Jpsi_phi", &Jpsi_phi, "Jpsi_phi/D");
     outTree->Branch("Jpsi_mass2", &Jpsi_mass2, "Jpsi_mass2/D");
@@ -315,6 +329,8 @@ void rephrase() {
     // outTree->Branch("psi2S_phi", &psi2S_phi, "psi2S_phi/D");
     // outTree->Branch("evt_d", &evt_d, "evt_d/D");
     outTree->Branch("evt_vtxProb", &evt_vtxProb, "evt_vtxProb/D");
+    outTree->Branch("evt_Z", &evt_Z, "evt_Z/D");
+    outTree->Branch("vtx_Z", &vtx_Z, "vtx_Z/D");
     outTree->Branch("evt_weight", &evt_weight, "evt_weight/D");
     outTree->Branch("evt_mass", &evt_mass, "evt_mass/D");
     outTree->Branch("evt_mass2", &evt_mass2, "evt_mass2/D");
@@ -331,6 +347,7 @@ void rephrase() {
         // Jpsi_sigLxy = process.Jpsi_sigLxy[i];
         Jpsi_pt1 = process.Jpsi_pt1[i];
         Jpsi_y1 = process.Jpsi_y1[i];
+        Jpsi_Z1 = process.Jpsi_Z1[i];
         // Jpsi_eta = process.Jpsi_eta[i];
         // Jpsi_phi = process.Jpsi_phi[i];
         Jpsi_mass2 = process.Jpsi_mass2[i];
@@ -342,6 +359,8 @@ void rephrase() {
         // psi2S_phi = process.psi2S_phi[i];
         // evt_d = process.evt_d[i];
         evt_vtxProb = process.evt_vtxProb[i];
+        evt_Z = process.evt_Z[i];
+        vtx_Z = process.vtx_Z[i];
         evt_weight = process.evt_weight[i];
         evt_mass = process.evt_mass[i];
         evt_mass2 = process.evt_mass2[i];
