@@ -5,28 +5,45 @@ from tdrStyle import *
 from math import sqrt
 import numpy as np
 
-xSPS = 0.6# The fraction of SPS cross section
-aSPS, aDPS = 0.33072, 0.18933
-prefix, suffix = "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/", "/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/plot/raw_efficiency.txt"
+xLO, xSPS = 0, 1# The fraction of LO xsec and SPS xsec
+aLO, aNLO, aDPS = 0.23713, 0.23713, 0.18933# Gross acceptances
+# Acceptance of Pythia8 generated SPS events: 0.33072
+rawLO, rawNLO, rawDPS = ("./plot/raw_efficiency_NLO.txt",
+    "./plot/raw_efficiency_NLO.txt",
+    # "./raw_efficiency_backup.txt",
+    "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/plot/raw_efficiency.txt")# Paths to raw efficiency maps
 ptBin = array('d', [i for i in range(10, 24)] + [24, 26, 28, 30, 35, 40])
 yBin = array('d', [-2, -1.75, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 1.75, 2])
 
-mVtx_Bin_SPS, mTrg_Vtx_SPS, mVtx_Bin_DPS, mTrg_Vtx_DPS = [], [], [], []
-
-with open(prefix + "SPS" + suffix, 'r') as f:
+mVtx_Bin_LO, mTrg_Vtx_LO, mVtx_Bin_NLO, mTrg_Vtx_NLO, mVtx_Bin_DPS, mTrg_Vtx_DPS = ([] for i in range(6))
+# Read LO matrix
+with open(rawLO, 'r') as f:
     l = f.readline()
-    nSPS = float(l.split(' ')[2])
+    nLO = float(l.split(' ')[2])
     for i in range(2):
         l = f.readline()
     for i in range(len(yBin) - 1):
         l = f.readline()
-        mVtx_Bin_SPS.append(np.array(l.strip().split(), dtype=float) / nSPS * xSPS * aSPS)
+        mVtx_Bin_LO.append(np.array(l.strip().split(), dtype=float) / nLO * xSPS * xLO * aLO)
     for i in range(len(ptBin) - 1):
         l = f.readline()
-        mTrg_Vtx_SPS.append(np.array(l.strip().split(), dtype=float) / nSPS * xSPS * aSPS)
-mVtx_Bin_SPS, mTrg_Vtx_SPS = np.array(mVtx_Bin_SPS), np.array(mTrg_Vtx_SPS)
-
-with open(prefix + "DPS" + suffix, 'r') as f:
+        mTrg_Vtx_LO.append(np.array(l.strip().split(), dtype=float) / nLO * xSPS * xLO * aLO)
+mVtx_Bin_LO, mTrg_Vtx_LO = np.array(mVtx_Bin_LO), np.array(mTrg_Vtx_LO)
+# Read NLO matrix
+with open(rawNLO, 'r') as f:
+    l = f.readline()
+    nNLO = float(l.split(' ')[2])
+    for i in range(2):
+        l = f.readline()
+    for i in range(len(yBin) - 1):
+        l = f.readline()
+        mVtx_Bin_NLO.append(np.array(l.strip().split(), dtype=float) / nNLO * xSPS * (1 - xLO) * aNLO)
+    for i in range(len(ptBin) - 1):
+        l = f.readline()
+        mTrg_Vtx_NLO.append(np.array(l.strip().split(), dtype=float) / nNLO * xSPS * (1 - xLO) * aNLO)
+mVtx_Bin_NLO, mTrg_Vtx_NLO = np.array(mVtx_Bin_NLO), np.array(mTrg_Vtx_NLO)
+# Read DPS matrix
+with open(rawDPS, 'r') as f:
     l = f.readline()
     nDPS = float(l.split(' ')[2])
     for i in range(2):
@@ -39,7 +56,7 @@ with open(prefix + "DPS" + suffix, 'r') as f:
         mTrg_Vtx_DPS.append(np.array(l.strip().split(), dtype=float) / nDPS * (1 - xSPS) * aDPS)
 mVtx_Bin_DPS, mTrg_Vtx_DPS = np.array(mVtx_Bin_DPS), np.array(mTrg_Vtx_DPS)
 
-mVtx_Bin, mTrg_Vtx = mVtx_Bin_SPS + mVtx_Bin_DPS, mTrg_Vtx_SPS + mTrg_Vtx_DPS
+mVtx_Bin, mTrg_Vtx = mVtx_Bin_LO + mVtx_Bin_NLO + mVtx_Bin_DPS, mTrg_Vtx_LO + mTrg_Vtx_NLO + mTrg_Vtx_DPS
 mVtx_Bin = mVtx_Bin.reshape(mVtx_Bin.shape[0], mVtx_Bin.shape[1] // 4, 4)
 mTrg_Vtx = mTrg_Vtx.reshape(mTrg_Vtx.shape[0], mTrg_Vtx.shape[1] // 3, 3)
 
@@ -135,7 +152,7 @@ plotSave(dHlt, ["pT_Jpsi", "pT_psi2S", "effErr_HLT"], "EffErr_HLT")
 plotSave(hTrg, ["pT_Jpsi", "pT_psi2S", "eff_FourMu"], "Eff_FourMu")
 plotSave(dTrg, ["pT_Jpsi", "pT_psi2S", "effErr_FourMu"], "EffErr_FourMu")
 
-with open("./efficiency_{}.txt".format(xSPS), 'w') as f:
+with open("txt/efficiency_{}_{}.txt".format(xLO, xSPS), 'w') as f:
     n, m = len(ptBin) - 1, len(yBin) - 1
     f.write("{} {}\n".format(n, m))
     l = ""

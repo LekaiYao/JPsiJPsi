@@ -50,29 +50,29 @@ void Fit_1D(string var, double vmin, double vmax) {
     ////// Mixture of SPS/DPS=2:1
     RooRealVar Jpsi_m1("Jpsi_m1", "Jpsi_m1", wsp->var("Jpsi_mean")->getVal());
     RooRealVar Jpsi_d1("Jpsi_d1", "Jpsi_d1", wsp->var("Jpsi_devia1")->getVal());
+    RooRealVar Jpsi_a1("Jpsi_a1", "Jpsi_a1", wsp->var("Jpsi_alpha1")->getVal());
+    RooRealVar Jpsi_n1("Jpsi_n1", "Jpsi_n1", wsp->var("Jpsi_nx1")->getVal());
     RooRealVar Jpsi_d2("Jpsi_d2", "Jpsi_d2", wsp->var("Jpsi_devia2")->getVal());
-    RooRealVar Jpsi_a2("Jpsi_a2", "Jpsi_a2", wsp->var("Jpsi_alpha2")->getVal());
-    RooRealVar Jpsi_n2("Jpsi_n2", "Jpsi_n2", wsp->var("Jpsi_nx2")->getVal());
     RooRealVar Jpsi_r1("Jpsi_r1", "Jpsi_r1", wsp->var("Jpsi_ratio")->getVal());
-    RooGaussian Jpsi_g1_1("Jpsi_g1_1", "Jpsi_g1_1", Jpsi_mass1, Jpsi_m1, Jpsi_d1);
-    RooCBShape Jpsi_c1_1("Jpsi_c1_1", "Jpsi_c1_1", Jpsi_mass1, Jpsi_m1, Jpsi_d2, Jpsi_a2, Jpsi_n2);
-    RooGaussian Jpsi_g1_2("Jpsi_g1_2", "Jpsi_g1_2", Jpsi_mass2, Jpsi_m1, Jpsi_d1);
-    RooCBShape Jpsi_c1_2("Jpsi_c1_2", "Jpsi_c1_2", Jpsi_mass2, Jpsi_m1, Jpsi_d2, Jpsi_a2, Jpsi_n2);
-    RooAddPdf JpsiMassMix1("JpsiMassMix1", "JpsiMassMix1", RooArgList(Jpsi_g1_1, Jpsi_c1_1), Jpsi_r1);
-    RooAddPdf JpsiMassMix2("JpsiMassMix2", "JpsiMassMix2", RooArgList(Jpsi_g1_2, Jpsi_c1_2), Jpsi_r1);
+    RooCBShape Jpsi_c1_1("Jpsi_c1_1", "Jpsi_c1_1", Jpsi_mass1, Jpsi_m1, Jpsi_d1, Jpsi_a1, Jpsi_n1);
+    RooGaussian Jpsi_g1_1("Jpsi_g1_1", "Jpsi_g1_1", Jpsi_mass1, Jpsi_m1, Jpsi_d2);
+    RooCBShape Jpsi_c1_2("Jpsi_c1_2", "Jpsi_c1_2", Jpsi_mass2, Jpsi_m1, Jpsi_d1, Jpsi_a1, Jpsi_n1);
+    RooGaussian Jpsi_g1_2("Jpsi_g1_2", "Jpsi_g1_2", Jpsi_mass2, Jpsi_m1, Jpsi_d2);
+    RooAddPdf JpsiMassMix1("JpsiMassMix1", "JpsiMassMix1", RooArgList(Jpsi_c1_1, Jpsi_g1_1), Jpsi_r1);
+    RooAddPdf JpsiMassMix2("JpsiMassMix2", "JpsiMassMix2", RooArgList(Jpsi_c1_2, Jpsi_g1_2), Jpsi_r1);
     ////// Bdecay
     RooRealVar Jpsi_m2("Jpsi_m2", "Jpsi_m2", wsp->var("Jpsi_mean")->getVal());
     RooRealVar Jpsi_d3("Jpsi_d3", "Jpsi_d3", wsp->var("Jpsi_devia1")->getVal());
+    RooRealVar Jpsi_a3("Jpsi_a3", "Jpsi_a3", wsp->var("Jpsi_alpha1")->getVal());
+    RooRealVar Jpsi_n3("Jpsi_n3", "Jpsi_n3", wsp->var("Jpsi_nx1")->getVal());
     RooRealVar Jpsi_d4("Jpsi_d4", "Jpsi_d4", wsp->var("Jpsi_devia2")->getVal());
-    RooRealVar Jpsi_a4("Jpsi_a4", "Jpsi_a4", wsp->var("Jpsi_alpha2")->getVal());
-    RooRealVar Jpsi_n4("Jpsi_n4", "Jpsi_n4", wsp->var("Jpsi_nx2")->getVal());
     RooRealVar Jpsi_r2("Jpsi_r2", "Jpsi_r2", wsp->var("Jpsi_ratio")->getVal());
-    RooGaussian Jpsi_g2_1("Jpsi_g2_1", "Jpsi_g2_1", Jpsi_mass1, Jpsi_m2, Jpsi_d3);
-    RooCBShape Jpsi_c2_1("Jpsi_c2_1", "Jpsi_c2_1", Jpsi_mass1, Jpsi_m2, Jpsi_d4, Jpsi_a4, Jpsi_n4);
-    RooGaussian Jpsi_g2_2("Jpsi_g2_2", "Jpsi_g2_2", Jpsi_mass2, Jpsi_m2, Jpsi_d3);
-    RooCBShape Jpsi_c2_2("Jpsi_c2_2", "Jpsi_c2_2", Jpsi_mass2, Jpsi_m2, Jpsi_d4, Jpsi_a4, Jpsi_n4);
-    RooAddPdf JpsiMassB1("JpsiMassB1", "JpsiMassB1", RooArgList(Jpsi_g2_1, Jpsi_c2_1), Jpsi_r2);
-    RooAddPdf JpsiMassB2("JpsiMassB2", "JpsiMassB2", RooArgList(Jpsi_g2_2, Jpsi_c2_2), Jpsi_r2);
+    RooCBShape Jpsi_c2_1("Jpsi_c2_1", "Jpsi_c2_1", Jpsi_mass1, Jpsi_m2, Jpsi_d3, Jpsi_a3, Jpsi_n3);
+    RooGaussian Jpsi_g2_1("Jpsi_g2_1", "Jpsi_g2_1", Jpsi_mass1, Jpsi_m2, Jpsi_d4);
+    RooCBShape Jpsi_c2_2("Jpsi_c2_2", "Jpsi_c2_2", Jpsi_mass2, Jpsi_m2, Jpsi_d3, Jpsi_a3, Jpsi_n3);
+    RooGaussian Jpsi_g2_2("Jpsi_g2_2", "Jpsi_g2_2", Jpsi_mass2, Jpsi_m2, Jpsi_d4);
+    RooAddPdf JpsiMassB1("JpsiMassB1", "JpsiMassB1", RooArgList(Jpsi_c2_1, Jpsi_g2_1), Jpsi_r2);
+    RooAddPdf JpsiMassB2("JpsiMassB2", "JpsiMassB2", RooArgList(Jpsi_c2_2, Jpsi_g2_2), Jpsi_r2);
     ////// Combinatorial signal
     RooRealVar Jpsi_r3("Jpsi_r3", "Jpsi_r3", wsp->var("Jpsi_prop2")->getVal());
     RooAddPdf JpsiMassCSig1("JpsiMassCSig1", "JpsiMassCSig1", RooArgList(JpsiMassMix1, JpsiMassB1), Jpsi_r3);
@@ -142,15 +142,15 @@ void Fit_1D(string var, double vmin, double vmax) {
     Jpsi_m1.setConstant(kTRUE);
     Jpsi_d1.setConstant(kTRUE);
     Jpsi_d2.setConstant(kTRUE);
-    Jpsi_a2.setConstant(kTRUE);
-    Jpsi_n2.setConstant(kTRUE);
+    Jpsi_a1.setConstant(kTRUE);
+    Jpsi_n1.setConstant(kTRUE);
     Jpsi_r1.setConstant(kTRUE);
 
     Jpsi_m2.setConstant(kTRUE);
     Jpsi_d3.setConstant(kTRUE);
     Jpsi_d4.setConstant(kTRUE);
-    Jpsi_a4.setConstant(kTRUE);
-    Jpsi_n4.setConstant(kTRUE);
+    Jpsi_a3.setConstant(kTRUE);
+    Jpsi_n3.setConstant(kTRUE);
     Jpsi_r2.setConstant(kTRUE);
 
     Jpsi_r3.setConstant(kTRUE);

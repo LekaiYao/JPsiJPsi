@@ -15,7 +15,7 @@ if not os.path.exists(outPlotDir):
     os.system("mkdir " + outPlotDir)
 
 # Handle input files and extract trees.
-inFileDir = "/eos/home-c/chensh/JPsiJPsi/GEN_nofilter/SPS/CMSSW_10_2_5/src/4mu_acc/direct/"
+inFileDir = "direct/"
 inFileList = ["SPS_2016_JJ_{}.root".format(i) for i in range(1, 2)]
 inFiles = {}
 inTrees = []

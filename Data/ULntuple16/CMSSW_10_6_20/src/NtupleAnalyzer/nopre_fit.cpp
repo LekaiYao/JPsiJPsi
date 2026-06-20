@@ -23,7 +23,7 @@ using namespace std;
 using namespace RooFit;
 
 void nopre_fit() {
-    Int_t N = 60000, BinNum = 100;
+    Int_t N = 100000, BinNum = 100;
     RooRealVar Jpsi_mass1("Jpsi_mass1", "Jpsi_mass1", 2.95, 3.25);
     RooRealVar Jpsi_mass2("Jpsi_mass2", "Jpsi_mass2", 2.95, 3.25);
     RooRealVar Jpsi_ctau1("Jpsi_ctau1", "Jpsi_ctau1", -0.03, 0.16);
@@ -43,18 +43,20 @@ void nopre_fit() {
     // Signal p.d.f.
     RooRealVar Jpsi_mean("Jpsi_mean", "Jpsi_mean", 3.0969, 3.05, 3.15);
     RooRealVar Jpsi_devia1("Jpsi_devia1", "Jpsi_devia1", 0.01, 0, 0.03);
-    // RooRealVar Jpsi_alpha1("Jpsi_alpha1", "Jpsi_alpha1", 1, 0.1, 5);
-    // RooRealVar Jpsi_nx1("Jpsi_nx1", "Jpsi_nx1", 1, 0, 50);
+    RooRealVar Jpsi_alpha1("Jpsi_alpha1", "Jpsi_alpha1", 1, 0.1, 5);
+    RooRealVar Jpsi_nx1("Jpsi_nx1", "Jpsi_nx1", 1, 0, 50);
     RooRealVar Jpsi_devia2("Jpsi_devia2", "Jpsi_devia2", 0.05, 0.02, 0.08);
-    RooRealVar Jpsi_alpha2("Jpsi_alpha2", "Jpsi_alpha2", 1.5, 0.1, 3.5);
-    RooRealVar Jpsi_nx2("Jpsi_nx2", "Jpsi_nx2", 1, 0, 50);
+    // RooRealVar Jpsi_alpha2("Jpsi_alpha2", "Jpsi_alpha2", 1.5, 0.1, 3.5);
+    // RooRealVar Jpsi_nx2("Jpsi_nx2", "Jpsi_nx2", 1, 0, 120);
     RooRealVar Jpsi_ratio("Jpsi_ratio", "Jpsi_ratio", 0.6, 0, 1);
-    // RooCBShape Jpsi_crysBall1_1("Jpsi_crysBall1_1", "Jpsi_crysBall1_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1, Jpsi_alpha1, Jpsi_nx1);
-    RooGaussian Jpsi_crysBall1_1("Jpsi_crysBall1_1", "Jpsi_crysBall1_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1);
-    RooCBShape Jpsi_crysBall2_1("Jpsi_crysBall2_1", "Jpsi_crysBall2_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia2, Jpsi_alpha2, Jpsi_nx2);
-    // RooCBShape Jpsi_crysBall1_2("Jpsi_crysBall1_2", "Jpsi_crysBall1_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia1, Jpsi_alpha1, Jpsi_nx1);
-    RooGaussian Jpsi_crysBall1_2("Jpsi_crysBall1_2", "Jpsi_crysBall1_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia1);
-    RooCBShape Jpsi_crysBall2_2("Jpsi_crysBall2_2", "Jpsi_crysBall2_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia2, Jpsi_alpha2, Jpsi_nx2);
+    RooCBShape Jpsi_crysBall1_1("Jpsi_crysBall1_1", "Jpsi_crysBall1_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1, Jpsi_alpha1, Jpsi_nx1);
+    // RooGaussian Jpsi_crysBall1_1("Jpsi_crysBall1_1", "Jpsi_crysBall1_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1);
+    // RooCBShape Jpsi_crysBall2_1("Jpsi_crysBall2_1", "Jpsi_crysBall2_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia2, Jpsi_alpha2, Jpsi_nx2);
+    RooGaussian Jpsi_crysBall2_1("Jpsi_crysBall2_1", "Jpsi_crysBall2_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia2);
+    RooCBShape Jpsi_crysBall1_2("Jpsi_crysBall1_2", "Jpsi_crysBall1_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia1, Jpsi_alpha1, Jpsi_nx1);
+    // RooGaussian Jpsi_crysBall1_2("Jpsi_crysBall1_2", "Jpsi_crysBall1_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia1);
+    // RooCBShape Jpsi_crysBall2_2("Jpsi_crysBall2_2", "Jpsi_crysBall2_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia2, Jpsi_alpha2, Jpsi_nx2);
+    RooGaussian Jpsi_crysBall2_2("Jpsi_crysBall2_2", "Jpsi_crysBall2_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia2);
     RooAddPdf JpsiMassSig1("JpsiMassSig1", "JpsiMassSig1", RooArgList(Jpsi_crysBall1_1, Jpsi_crysBall2_1), Jpsi_ratio);
     RooAddPdf JpsiMassSig2("JpsiMassSig2", "JpsiMassSig2", RooArgList(Jpsi_crysBall1_2, Jpsi_crysBall2_2), Jpsi_ratio);
     // Background p.d.f.
@@ -85,7 +87,7 @@ void nopre_fit() {
     // Combinatorial background p.d.f.
     // RooRealVar Jpsi_mu3("Jpsi_mu3", "Jpsi_mu3", 0, -0.005, 0.005);
     // RooRealVar Jpsi_sigma6("Jpsi_sigma6", "Jpsi_sigma6", 0.003, 0.001, 0.01);//0.02
-    RooRealVar Jpsi_sigma7("Jpsi_sigma7", "Jpsi_sigma7", 0.003, 0.001, 0.02);//0.01
+    RooRealVar Jpsi_sigma7("Jpsi_sigma7", "Jpsi_sigma7", 0.003, 0.0008, 0.02);//0.01
     RooRealVar Jpsi_coef3("Jpsi_coef3", "Jpsi_coef3", 0.06, 0.01, 0.2);
     // RooRealVar Jpsi_prop3("Jpsi_prop3", "Jpsi_prop3", 0.5, 0, 1);
     // RooRealVar Jpsi_alpha3("Jpsi_alpha3", "Jpsi_alpha3", 1.5, 0.1, 10);
@@ -120,7 +122,7 @@ void nopre_fit() {
     RooProdPdf pdf_Comb_Sig("pdf_Comb_Sig", "pdf_Comb_Sig", pdf_mass_CombSig, pdf_ctau_BkgSig);
     RooProdPdf pdf_Comb_Comb("pdf_Comb_Comb", "pdf_Comb_Comb", pdf_mass_CombComb, pdf_ctau_BkgBkg);
     RooRealVar n_P_P("n_P_P", "n_P_P", 1e3, 1e1, N);//1e2
-    RooRealVar n_P_NP("n_P_NP", "n_P_NP", 1e3, 1, N);//1e1
+    RooRealVar n_P_NP("n_P_NP", "n_P_NP", 5e2, 1, N);//1e1
     // RooRealVar n_NP_P("n_NP_P", "n_NP_P", 1e3, 0, N);//1e1
     RooRealVar n_NP_NP("n_NP_NP", "n_NP_NP", 1e3, 1, N);
     RooRealVar n_Sig_Comb("n_Sig_Comb", "n_Sig_Comb", 1e4, 1, N);

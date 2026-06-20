@@ -6,9 +6,10 @@
 using namespace std;
 
 void loadFile(vector<string>& filenames) {
-    // string prefix = "Ntuple_2016_SPS_";
-    string prefix = "/eos/home-c/chensh/JPsiPsi2s/HELAC_Onia/condorIO/JJSPS/ntuple/HO2016_Ntuple_";
-    for(int i = 1; i <= 116; i++) filenames.push_back(prefix + to_string(i) + ".root");
+    string prefix = "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/";
+    for(int i = 1; i <= 5; i++) {
+        for(int j = 1; j <= 10; j++) filenames.push_back(prefix + to_string(i) + "/Ntuple_2016_DPS_" + to_string(j) + ".root");
+    }
 }
 
 vector<Double_t> eff_pt, eff_y;
@@ -23,7 +24,7 @@ Double_t calWeight(Double_t Jpsi_pt1, Double_t Jpsi_y1, Double_t Jpsi_pt2, Doubl
 }
 void loadEff() {
     string line;
-    ifstream effFile("txt/efficiency_0_0.6.txt");
+    ifstream effFile("/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/txt/efficiency_0_0.6.txt");
     if(!effFile.is_open()) return;
     int eff_ptBin = 0, eff_yBin = 0, lineCnt = 0;
     while(getline(effFile, line)) {

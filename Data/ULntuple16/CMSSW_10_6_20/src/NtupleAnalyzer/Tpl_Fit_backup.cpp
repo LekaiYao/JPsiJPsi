@@ -30,11 +30,11 @@ void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dh
     RooRealVar coef_SPS("coef_SPS", "coef_SPS", frac * n_sps_dps);
     RooRealVar coef_DPS("coef_DPS", "coef_DPS", (1 - frac) * n_sps_dps);
     RooRealSumFunc func("func", "func", {func_SPS, func_DPS}, {coef_SPS, coef_DPS});
-    dh->plotOn(frame, Name("Data"), DrawOption("E1"));
+    dh->plotOn(frame, Name("Data"));
     func.plotOn(frame, LineColor(kBlack), Name("All")); 
     func_SPS.plotOn(frame, Normalization(coef_SPS.getVal()), LineColor(kBlue), LineStyle(kDashed), Name("SPS"));
     func_DPS.plotOn(frame, Normalization(coef_DPS.getVal()), LineColor(kRed), LineStyle(kDotted), Name("DPS"));
-    TLegend *legend = new TLegend(.55, .60, .75, .85);
+    TLegend *legend = new TLegend(.65, .60, .85, .85);
     legend->AddEntry(frame->findObject("Data"), "RunII 2018", "L");
     legend->AddEntry(frame->findObject("All"), "Total p.d.f.", "L");
     legend->AddEntry(frame->findObject("SPS"), "SPS p.d.f.", "L");
@@ -50,58 +50,49 @@ void Tpl_Fit() {
     const int varNum = 5;
     const string varName[] = {"delta_y", "delta_phi", "evt_mass", "evt_y", "evt_pt"};
     // Binning configurations
-    const int binNum[] = {6, 8, 7, 5, 9};
+    const int binNum[] = {6, 5, 5, 5, 6};
     const vector<vector<double>> bins = {
-        {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 4.0},
-        {0.0_PI, 0.125_PI, 0.25_PI, 0.375_PI, 0.5_PI, 0.625_PI, 0.75_PI, 0.875_PI, 1.0_PI},
-        {7.5, 17.5, 27.5, 37.5, 47.5, 57.5, 67.5, 107.5},
-        {0.0, 0.4, 0.8, 1.2, 1.6, 2.0},
-        {0, 5, 10, 15, 20, 25, 30, 35, 40, 80}
+        {0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 4.0}, {0.0_PI, 0.2_PI, 0.4_PI, 0.6_PI, 0.8_PI, 1.0_PI}, {7.5, 17.5, 27.5, 37.5, 47.5, 107.5},
+        {0.0, 0.4, 0.8, 1.2, 1.6, 2.0}
+        , {0, 8, 16, 24, 32, 40, 80}
     };
-    // Differential cross sections(event yield)
+    // Differential cross sections
     vector<vector<double>> xSec = {
-        {2585.85, 848.6, 514.317, 390.036, 264.352, 207.22},
-        {1292.21, 767.777, 223.793, 336.095, 285.619, 329.894, 627.668, 993.237},
-        {916.264, 907.639, 1143.22, 836.383, 436.256, 175.983, 179.425},
-        {1300.21, 1365.8, 1318.3, 794.153, 263.802},
-        {678.57, 696.301, 574.91, 334.685, 1169.18, 835.068, 286.57, 237.961, 284.646}
+        {632.201, 129.542, 72.1842, 83.3564, 12.3596, 19.4357}, {653.633, 60.9626, 46.7251, 60.4103, 138.908}, {796.426, 251.365, 236.285, 61.7321, 76.9698},
+        {472.951, 296.483, 354.145, 222.521, 79.273}
+        , {250.092, 204.513, 386.399, 357.97, 138.75, 100.456}
     };
-    // Statistical uncertainties(error of event yield)
+    // Statistical uncertainties
     vector<vector<double>> sta = {
-        {54.3052, 32.3728, 25.6471, 22.7905, 18.318, 16.6171},
-        {37.797, 29.4854, 16.5064, 20.0209, 18.4893, 20.3366, 28.0881, 35.7158},
-        {33.2635, 32.3605, 37.5913, 31.8681, 22.7294, 15.3576, 14.8315},
-        {40.2643, 40.9217, 39.7716, 30.4744, 17.9819},
-        {28.7697, 30.4292, 26.7814, 20.8368, 36.4629, 31.4697, 18.0875, 16.4044, 18.0145}
+        {28.0054, 15.3417, 11.7034, 10.0083, 5.56255, 7.32121}, {30.6741, 9.6205, 9.08513, 10.8043, 16.3403}, {35.0803, 22.6198, 20.7751, 15.9625, 15.5374},
+        {28.6379, 25.4596, 25.508, 19.7277, 13.0565}
+        , {20.6896, 22.3792, 26.5792, 26.183, 15.1611, 12.4401}
     };
     for(int i = 0; i < varNum; i++) {
         for(int j = 0; j < binNum[i]; j++) {
-            double x = 1e-3 / (36.3 * 0.05961 * 0.05961) / (bins[i][j + 1] - bins[i][j]);
-            xSec[i][j] *= x;
-            sta[i][j] *= x;
+            xSec[i][j] *= 1e-3 / (61.31 * 0.05961 * 0.008) / (bins[i][j + 1] - bins[i][j]);
+            sta[i][j] *= 1e-3 / (61.31 * 0.05961 * 0.008) / (bins[i][j + 1] - bins[i][j]);
         }
     }
-    // Systematic uncertainties(in percentage)
-    const double sys1 = 0.015, sys2 = 0.026;
+    // Systematic uncertainties
+    const double sys1 = 0.0283, sys2 = 0.025;
     const vector<vector<double>> sys3 = {
-        {0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0}
+        {0.00210645, 0.0180457, 0.0126121, 0.0126625, -0.00438329, 0.0115217}, {0.00959917, 0.0238948, 0.0133999, -0.00404647, 0.00467304},
+        {0.0232711, 0.00839292, -0.000209678, 0.0291752, -0.00383268}, 
+        {0.00551673, 0.00308563, 0.0243919, 0.00997864, 0.0170281}
+        , {-0.000628592, 0.00329366, 0.013584, 0.0224671, -0.0165127, 0.0444984}
     }, sys4 = {
-        {0.0125, 0.0359, 0.0492, 0.0239, 0.0973, 0.1003},
-        {0.0162, 0.04378, 0.0778, 0.1242, 0.077, 0.0483, 0.0493, 0.0212},
-        {0.0594, 0.039, 0.0293, 0.0681, 0.0402, 0.1205, 0.101},
-        {0.0499, 0.0138, 0.0349, 0.0473, 0.0965},
-        {0.0983, 0.0523, 0.0653, 0.0399, 0.0128, 0.0947, 0.091, 0.077, 0.1225}
+        {0.074069, 0.079177, 0.123122, 0.108043, 0.0917305, 0.433594}, {0.0469346, 0.0603078, 0.0501868, 0.0936282, 0.088843},
+        {0.0501369, 0.106403, 0.104383, 0.0947623, 0.0210585}, 
+        {0.136552, 0.0843728, 0.0157296, 0.0357353, 0.0430499}
+        , {0.0432611, 0.0779885, 0.0144281, 0.0646486, 0.111898, 0.138225}
     };
     // Specify which variables participate in simultaneous fit
     const bool simul[] = {true, true, false, false, false};
     // Store results of f_SPS
     double *fSPS = new double[varNum];
     // Read SPS and DPS data for later use
-    TFile spsFile("WeightNLO.root", "READ"), dpsFile("UnweightDPS.root", "READ");
+    TFile spsFile("UnweightSPS.root", "READ"), dpsFile("UnweightDPS.root", "READ");
     TTree *spsTree = (TTree *)spsFile.Get("data"), *dpsTree = (TTree *)dpsFile.Get("data");
     int nSPSEtr = spsTree->GetEntries(), nDPSEtr = dpsTree->GetEntries();
     // Store histograms and p.d.f.s in arrays

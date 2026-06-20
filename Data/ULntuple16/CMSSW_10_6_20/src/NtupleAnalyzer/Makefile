@@ -6,20 +6,20 @@ Minv_LIST := evt_mass-7.5-17.5 evt_mass-17.5-27.5 evt_mass-27.5-37.5 evt_mass-37
 SY_LIST := evt_y-0-0.4 evt_y-0.4-0.8 evt_y-0.8-1.2 evt_y-1.2-1.6 evt_y-1.6-2.0 
 SPt_LIST := evt_pt-0-5 evt_pt-5-10 evt_pt-10-15 evt_pt-15-20 evt_pt-20-25 evt_pt-25-30 evt_pt-30-35 evt_pt-35-40 evt_pt-40-80
 
-Model_4D_tot.root:
-	@root -l -q -b Fit_4D_tot.cpp > tmp
+Model_4D_tot.root: WeightData.root
+	@root -l -q Fit_4D_tot.cpp > tmp
 
 $(DY_LIST) $(DPhi_LIST) $(Minv_LIST) $(SY_LIST) $(SPt_LIST): Model_4D_tot.root
 	$(eval PARTS := $(subst -, ,$@))
 	$(eval VAR := $(word 1,$(PARTS)))
 	$(eval MIN := $(word 2,$(PARTS)))
 	$(eval MAX := $(word 3,$(PARTS)))
-	@root -l -q -b 'Fit_4D_diff.cpp("$(VAR)", $(MIN), $(MAX))' > tmp
-	@root -l -q -b 'Fit_1D.cpp("$(VAR)", $(MIN), $(MAX))' > tmp
+	@root -l -q 'Fit_4D_diff.cpp("$(VAR)", $(MIN), $(MAX))' > tmp
+	@root -l -q 'Fit_1D.cpp("$(VAR)", $(MIN), $(MAX))' > tmp
 	@echo $(VAR): $(MIN)~$(MAX) >> log.txt
-	@root -l -q -b 'Fit_Check.cpp(true)' | tail -1 | tr -d '\n' >> log.txt
-	@root -l -q -b 'Fit_Check.cpp(false)' | tail -1 | tr -d '\n' >> log.txt
-	@root -l -q -b 'Fit_Check.cpp(false)' | tail -1 >> log.txt
+	@root -l -q 'Fit_Check.cpp(true)' | tail -1 | tr -d '\n' >> log.txt
+	@root -l -q 'Fit_Check.cpp(false)' | tail -1 | tr -d '\n' >> log.txt
+	@root -l -q 'Fit_Check.cpp(false)' | tail -1 >> log.txt
 
 DY: $(DY_LIST)
 	@echo >> log.txt
@@ -37,10 +37,10 @@ SPt: $(SPt_LIST)
 	@echo >> log.txt
 
 Tpl:
-	@root -l -q -b Tpl_Fit.cpp | tail -1
+	@root -l -q Tpl_Fit.cpp | tail -1
 
 all: DY DPhi Minv SY SPt
 
 clean:
 	@rm -f tmp
-# 	@echo > log.txt
+	@echo > log.txt
