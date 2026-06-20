@@ -12,9 +12,9 @@ using namespace std;
 
 // I/O and behavior switches.
 // Change inputFileName to WeightDPS.root or WeightData.root when needed.
-const string inputFileName = "WeightDPS.root";
-const string outPlotDir = "plots/DPS/";
-const bool drawWeightComparison = true;  // false: weighted only; true: unweighted vs weighted.
+const string inputFileName = "WeightSPSstar.root";
+const string outPlotDir = "plots/SPSstar/";
+const bool drawWeightComparison = false;  // false: weighted only; true: unweighted vs weighted.
 
 void drawWeightedOnly(TH1D &weighted, const string &outName) {
     TCanvas canvas(("c_" + outName).c_str(), outName.c_str(), 1000, 800);

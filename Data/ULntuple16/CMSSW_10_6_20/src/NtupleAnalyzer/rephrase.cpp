@@ -20,20 +20,26 @@ using namespace std;
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
 // string infix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/LO/Ntuple_2016_SPSLO";
-// int suffix[N_DIR] = {1};
-// string outFile = "WeightSPSLO_GEN.root";
+// int suffix[N_DIR] = {2};
+// string outFile = "WeightSPSLO_v2.root";
 // SPS NLO
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
 // string infix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO/Ntuple_2016_SPSNLO";
 // int suffix[N_DIR] = {1};
-// string outFile = "WeightSPSNLO_GEN.root";
+// string outFile = "WeightSPSNLO_v2.root";
 // SPS
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
 // string infix = "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/Ntuple_2016_SPS";
 // int suffix[N_DIR] = {10};
 // string outFile = "WeightSPS_pythia.root";
+// SPS star
+#define N_DIR 1
+string prefix[N_DIR] = {""};
+string infix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/Ntuple_2016_SPSstar";
+int suffix[N_DIR] = {1};
+string outFile = "WeightSPSstar.root";
 // SPS mix direct
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
@@ -41,11 +47,11 @@ using namespace std;
 // int suffix[N_DIR] = {1};
 // string outFile = "WeightSPS.root";
 // DPS
-#define N_DIR 1
-string prefix[N_DIR] = {""};
-string infix = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/DPS_ntuple/Ntuple_2016_DPS";//Ntuple/Ntuple_2018_DPS";
-int suffix[N_DIR] = {15};//{25};
-string outFile = "WeightDPS.root";
+// #define N_DIR 1
+// string prefix[N_DIR] = {""};
+// string infix = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/DPS_ntuple/Ntuple_2016_DPS";//Ntuple/Ntuple_2018_DPS";
+// int suffix[N_DIR] = {15};//{25};
+// string outFile = "WeightDPS.root";
 // Bdecay
 // #define N_DIR 2
 // string prefix[N_DIR] = {"", ""};
