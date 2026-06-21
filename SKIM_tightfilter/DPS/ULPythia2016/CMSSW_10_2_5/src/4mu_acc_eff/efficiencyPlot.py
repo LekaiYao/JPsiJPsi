@@ -1,4 +1,4 @@
-from ROOT import *
+from ROOT import TFile, TTree, TChain, TH2D, TCanvas, gStyle
 from array import array
 import os
 from tdrStyle import *
@@ -15,14 +15,14 @@ if not os.path.exists(outPlotDir):
     os.system("mkdir " + outPlotDir)
 
 # Handle input files and extract trees.
-inFileList = ["Ntuple_2016_DPS_{}.root".format(i) for i in range(1, 11)]
+# Combined DPS samples (leyao _1..15 + chensh _16..65 renamed for naming unification), flat in DPS_ntuple.
+inFileDir = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/DPS_ntuple/"
+inFileList = ["{}Ntuple_2016_DPS_{}.root".format(inFileDir, i) for i in range(1, 66)]
 inFiles = {}
 inTrees = []
-for i in range(1, 6):
-    for inFileName in inFileList:
-        inFile = '{}/'.format(i) + inFileName
-        inFiles[inFile] = TFile(inFile, "READ")
-        inTrees.append(inFiles[inFile].Get("rootuple/oniaTree"))
+for inFile in inFileList:
+    inFiles[inFile] = TFile(inFile, "READ")
+    inTrees.append(inFiles[inFile].Get("rootuple/oniaTree"))
 for inTree in inTrees:
     print(inTree)
 

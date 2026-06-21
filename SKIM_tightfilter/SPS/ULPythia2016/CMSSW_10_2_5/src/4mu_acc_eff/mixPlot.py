@@ -1,17 +1,17 @@
-from ROOT import *
+from ROOT import TH2D, TCanvas, gStyle
 from array import array
 import os
 from tdrStyle import *
 from math import sqrt
 import numpy as np
 
-xLO, xSPS = 0, 1# The fraction of LO xsec and SPS xsec
+xLO, xSPS = 0, 0.6# The fraction of LO xsec and SPS xsec (SPS:DPS = 0.6:0.4 -> writes txt/efficiency_0_0.6.txt)
 aLO, aNLO, aDPS = 0.23713, 0.23713, 0.18933# Gross acceptances
 # Acceptance of Pythia8 generated SPS events: 0.33072
 rawLO, rawNLO, rawDPS = ("./plot/raw_efficiency_NLO.txt",
     "./plot/raw_efficiency_NLO.txt",
     # "./raw_efficiency_backup.txt",
-    "/eos/home-c/chensh/JPsiJPsi/SKIM_tightfilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/plot/raw_efficiency.txt")# Paths to raw efficiency maps
+    "/eos/home-l/leyao/26JJ/JPsiJPsi/SKIM_tightfilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/plot/raw_efficiency.txt")# Paths to raw efficiency maps (leyao+chensh combined DPS recompute)
 ptBin = array('d', [i for i in range(10, 24)] + [24, 26, 28, 30, 35, 40])
 yBin = array('d', [-2, -1.75, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 1.75, 2])
 

@@ -6,9 +6,12 @@
 using namespace std;
 
 void loadFile(vector<string>& filenames) {
-    // string prefix = "Ntuple_2016_SPS_";
-    string prefix = "/eos/home-c/chensh/JPsiPsi2s/HELAC_Onia/condorIO/JJSPS/ntuple/HO2016_Ntuple_";
-    for(int i = 1; i <= 116; i++) filenames.push_back(prefix + to_string(i) + ".root");
+    // Combined NLO* SPSstar samples (leyao _1 + chensh _2..96 renamed for naming unification)
+    string prefix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/Ntuple_2016_SPSstar_";
+    for(int i = 1; i <= 96; i++) filenames.push_back(prefix + to_string(i) + ".root");
+    // Historical chensh HELAC-Onia path (no longer accessible):
+    // string prefix = "/eos/home-c/chensh/JPsiPsi2s/HELAC_Onia/condorIO/JJSPS/ntuple/HO2016_Ntuple_";
+    // for(int i = 1; i <= 116; i++) filenames.push_back(prefix + to_string(i) + ".root");
 }
 
 vector<Double_t> eff_pt, eff_y;

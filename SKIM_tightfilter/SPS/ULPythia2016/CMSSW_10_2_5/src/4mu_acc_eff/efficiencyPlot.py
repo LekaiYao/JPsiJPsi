@@ -10,16 +10,17 @@ ptBin = array('d', [i for i in range(10, 24)] + [24, 26, 28, 30, 35, 40])
 yBin = array('d', [-2, -1.75, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 1.75, 2])
 
 # I/O configuration
-## NLO (chensh HELAC-Onia samples; active)
-inFileDir = "/eos/home-c/chensh/JPsiPsi2s/HELAC_Onia/condorIO/JJSPS/ntuple/"
+## NLO* SPSstar (combined leyao + chensh samples in leyao dir; active)
+## _1 = leyao production; _2.._96 = chensh's 95 HO2016 files copied & renamed for naming unification
+inFileDir = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/"
 inFileList = []
-inFileList += ["{}HO2016_Ntuple_{}.root".format(inFileDir, i) for i in range(1, 117)]
+inFileList += ["{}Ntuple_2016_SPSstar_{}.root".format(inFileDir, i) for i in range(1, 97)]
 # import externalSet
 # inFileList += externalSet.externalList
-## NLO* (leyao local samples; commented option, comment-switch with the block above)
-# inFileDir = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/"
+## NLO (chensh original HELAC-Onia path; NOT accessible anymore, kept as historical reference)
+# inFileDir = "/eos/home-c/chensh/JPsiPsi2s/HELAC_Onia/condorIO/JJSPS/ntuple/"
 # inFileList = []
-# inFileList += ["{}Ntuple_2016_SPSstar_{}.root".format(inFileDir, i) for i in range(1, 2)]
+# inFileList += ["{}HO2016_Ntuple_{}.root".format(inFileDir, i) for i in range(1, 117)]
 outPlotDir = "plot/"
 outFile = "raw_efficiency_NLO.txt"
 ## LO
