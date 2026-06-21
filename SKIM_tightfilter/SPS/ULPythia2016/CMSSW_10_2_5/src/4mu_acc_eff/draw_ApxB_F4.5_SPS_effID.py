@@ -2,6 +2,7 @@
 #   纯 SPS 的 mu soft-ID 效率 map (Fig4.5leftup) 与其不确定度 (Fig4.5leftdown)。
 # 输入: 本目录 plot/raw_efficiency_NLO.txt（96 个合并 SPS NLO* 样本，每 bin 存 mVtx mIdt mRec mBin）。
 #       ε_ID = mIdt/mRec，不确定度按二项误差。
+# pt 轴: 0-40，与 official 同 region；效率图基于 GEN-fiducial(pt>10) binning，故 [0,10] 留空（与 official 同 region 对比）。
 # 输出: plot/Fig4.5leftup.pdf, plot/Fig4.5leftdown.pdf；拷到 AN/Fig/AccEff/ 替换 private 面板（official=right* 不动）。
 # 样式与 official 对齐: CMS Preliminary + J/Psi 轴 + colorbar(map) 0.45-1。
 # 运行: python3 draw_ApxB_F4.5_SPS_effID.py   (ROOT/PyROOT 环境)
@@ -20,19 +21,21 @@ raw = os.path.join(HERE, "plot", "raw_efficiency_NLO.txt")
 lines = open(raw).read().split("\n")
 hdr = lines[0].split()
 n, m = int(hdr[0]), int(hdr[1])
-ptB = array('d', [float(x) for x in lines[1].split()])
-yB  = array('d', [float(x) for x in lines[2].split()])
+ptRaw = [float(x) for x in lines[1].split()]          # [10,11,...,40]
+yB    = array('d', [float(x) for x in lines[2].split()])
+ptB   = array('d', [0.0] + ptRaw)                     # 前置 [0,10] 空 bin -> x 轴 0-40
+nP = len(ptB) - 1
 
-eff = TH2D("eff", "", n, ptB, m, yB)
-err = TH2D("err", "", n, ptB, m, yB)
+eff = TH2D("eff", "", nP, ptB, m, yB)
+err = TH2D("err", "", nP, ptB, m, yB)
 for i in range(m):
     vals = [float(x) for x in lines[3 + i].split()]
     for j in range(n):
         mVtx, mIdt, mRec, mBin = vals[4*j:4*j+4]
         if mRec > 0:
             e = mIdt / mRec
-            eff.SetBinContent(j+1, i+1, e)
-            err.SetBinContent(j+1, i+1, ((mRec - mIdt) * mIdt / mRec) ** 0.5 / mRec)
+            eff.SetBinContent(j+2, i+1, e)            # +2: bin1=[0,10] 留空, bin2=[10,11]=首个数据
+            err.SetBinContent(j+2, i+1, ((mRec - mIdt) * mIdt / mRec) ** 0.5 / mRec)
 
 def draw(h, ztitle, fmt, outname, zlo=None, zhi=None):
     c = TCanvas("c", "c", 2000, 900)
