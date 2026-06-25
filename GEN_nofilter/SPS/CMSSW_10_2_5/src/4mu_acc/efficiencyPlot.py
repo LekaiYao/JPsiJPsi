@@ -1,7 +1,8 @@
-from ROOT import *
+import ROOT
+from ROOT import TFile, TH2D, TCanvas, gStyle
 from array import array
 import os
-from tdrStyle import *
+from tdrStyle import setTDRStyle
 from math import sqrt
 import numpy as np
 
@@ -15,8 +16,9 @@ if not os.path.exists(outPlotDir):
     os.system("mkdir " + outPlotDir)
 
 # Handle input files and extract trees.
-inFileDir = "direct/"
-inFileList = ["SPS_2016_JJ_{}.root".format(i) for i in range(1, 2)]
+inFileDir = "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/SPS/CMSSW_10_2_5/src/4mu_acc/direct/"  # chensh Pythia8 GEN samples (local direct/ is empty)
+# inFileDir = "direct/"
+inFileList = ["SPS_2016_JJ_{}.root".format(i) for i in range(1, 11)]
 inFiles = {}
 inTrees = []
 for inFileName in inFileList:
@@ -34,7 +36,7 @@ dPt_Jpsi = TH2D("dPt_Jpsi", "dPt_Jpsi", len(ptBin) - 1, ptBin, len(yBin) - 1, yB
 hBin_Jpsi = TH2D("hBin_Jpsi", "hBin_Jpsi", len(ptBin) - 1, ptBin, len(yBin) - 1, yBin)# data point distribution(J/psi)
 
 # Define matrices
-mBin_Jpsi, mPt_Jpsi = tuple([np.zeros((len(yBin) - 1, len(ptBin) - 1), dtype=int) for i in range(2)])
+mBin_Jpsi, mEta_Jpsi, mPt_Jpsi = tuple([np.zeros((len(yBin) - 1, len(ptBin) - 1), dtype=int) for i in range(3)])
 
 # Loop on all rectangular bins, calculate efficiency and fill histograms.
 rJpsi1, rJpsi2 = "GEN_pair_id[0].first", "GEN_pair_id[0].second"
@@ -73,6 +75,7 @@ for ptIdx in range(len(ptBin) - 1):
             hPt_Jpsi.SetBinContent(bin, nPt_Jpsi / nEta_Jpsi)
             dPt_Jpsi.SetBinContent(bin, sqrt((nEta_Jpsi - nPt_Jpsi) * nPt_Jpsi / nEta_Jpsi) / nEta_Jpsi)
         mBin_Jpsi[yIdy][ptIdx] = int(nBin_Jpsi)
+        mEta_Jpsi[yIdy][ptIdx] = int(nEta_Jpsi)
         mPt_Jpsi[yIdy][ptIdx] = int(nPt_Jpsi)
 
 # Plot [histo] with [titles(x, y, z)] and save as [name].
@@ -123,5 +126,24 @@ with open(outPlotDir + "acceptance.txt", 'w') as f:
     for i in range(m):
         for j in range(n):
             l += str(mPt_Jpsi[i][j]) + ' ' + str(mBin_Jpsi[i][j]) + ' '
+        l += '\n'
+    f.write(l)
+
+# Extra map file for AN ApxB acceptance figures (keeps acceptance.txt above UNCHANGED for rephrase.cpp).
+# Two-step acceptance: A_eta = mEta/mBin (mu |eta|<2.4), A_etapt = mPt/mEta (+ mu pt>3.5).
+# Per-bin columns: mEta mPt mBin.
+with open(outPlotDir + "acceptance_maps.txt", 'w') as f:
+    n, m = len(ptBin) - 1, len(yBin) - 1
+    f.write("{} {} {} {}\n".format(n, m, nEvt, nAccEvt))
+    l = ""
+    for pt in ptBin:
+        l += str(pt) + ' '
+    l += '\n'
+    for y in yBin:
+        l += str(y) + ' '
+    l += '\n'
+    for i in range(m):
+        for j in range(n):
+            l += str(mEta_Jpsi[i][j]) + ' ' + str(mPt_Jpsi[i][j]) + ' ' + str(mBin_Jpsi[i][j]) + ' '
         l += '\n'
     f.write(l)
