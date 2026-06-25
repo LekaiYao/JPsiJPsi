@@ -61,3 +61,6 @@ update/
 *.md
 !README.md
 */docs/
+
+# Local experimental eff script (efficiencyPlot.py copy, not part of main chain)
+SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/eff.py
