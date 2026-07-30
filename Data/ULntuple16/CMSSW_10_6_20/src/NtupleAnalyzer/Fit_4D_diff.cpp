@@ -1,6 +1,7 @@
 #include "Plot_4D.hpp"
 
-void Fit_4D_diff(string var, double vmin, double vmax) {
+void Fit_4D_diff(string var, double vmin, double vmax, bool isRef=false) {
+    string ref = isRef ? "_ref" : "";
     // Define variables
     RooRealVar Jpsi_mass1("Jpsi_mass1", "Jpsi_mass1", 2.95, 3.25);
     RooRealVar Jpsi_mass2("Jpsi_mass2", "Jpsi_mass2", 2.95, 3.25);
@@ -22,9 +23,7 @@ void Fit_4D_diff(string var, double vmin, double vmax) {
     RooDataSet *data = new RooDataSet("data", "data", dataTree, variables, sel.c_str(), "evt_weight");
     
     // Parameters below are imported from total cross section 4D fit
-    // All parameters but psi2S_a, psi2S_b are fixed already
-    // Event yields are reconfigured
-    TFile *f = new TFile("Model_4D_tot.root");
+    TFile *f = new TFile(("Model_4D_tot"+ref+".root").c_str());
     RooWorkspace *wsp = (RooWorkspace *)f->Get("wsp");
     RooAddPdf &pdf_all = dynamic_cast<RooAddPdf &>(wsp->allPdfs()["pdf_all"]);
     RooAbsPdf &pdf_P_P = *(wsp->pdf("pdf_P_P"));
@@ -34,6 +33,7 @@ void Fit_4D_diff(string var, double vmin, double vmax) {
     RooAbsPdf &pdf_Sig_Comb = *(wsp->pdf("pdf_Sig_Comb"));
     RooAbsPdf &pdf_Comb_Sig = *(wsp->pdf("pdf_Comb_Sig"));
     RooAbsPdf &pdf_Comb_Comb = *(wsp->pdf("pdf_Comb_Comb"));
+    // Event yields are reconfigured
     wsp->var("n_P_P")->setVal(1e3);
     wsp->var("n_P_NP")->setVal(1e2);
     wsp->var("n_NP_NP")->setVal(1e2);
@@ -54,10 +54,10 @@ void Fit_4D_diff(string var, double vmin, double vmax) {
     // Draw data point and p.d.f. curve
     string prefix = "fig/diff/";
     Plot_4D(data, pdf_all, pdf_P_P, pdf_P_NP, pdf_NP_P, pdf_NP_NP, pdf_Sig_Comb, pdf_Comb_Sig, pdf_Comb_Comb,
-        prefix, Jpsi_mass1, Jpsi_mass2, Jpsi_ctau1, Jpsi_ctau2);
+        prefix, Jpsi_mass1, Jpsi_mass2, Jpsi_ctau1, Jpsi_ctau2, "", "pdf");
     pdf_all.getVariables()->Print("v");
 
     // Save parameters to file
-    wsp->writeToFile("Model_4D_diff.root");
+    wsp->writeToFile(("Model_4D_diff"+ref+".root").c_str());
     return;
 }

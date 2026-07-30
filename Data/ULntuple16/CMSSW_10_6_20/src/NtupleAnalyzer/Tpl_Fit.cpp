@@ -50,7 +50,7 @@ void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dh
     RooHist* pull = frame->pullHist("Data", "All");
     frame_pull->addPlotable(pull, "P");
     TLegend *legend = new TLegend(.55, .60, .75, .85);
-    legend->AddEntry(frame->findObject("Data"), "RunII 2018", "L");
+    legend->AddEntry(frame->findObject("Data"), "RunII 2016", "L");
     legend->AddEntry(frame->findObject("All"), "Total p.d.f.", "L");
     legend->AddEntry(frame->findObject("SPS"), "SPS p.d.f.", "L");
     legend->AddEntry(frame->findObject("DPS"), "DPS p.d.f.", "F");

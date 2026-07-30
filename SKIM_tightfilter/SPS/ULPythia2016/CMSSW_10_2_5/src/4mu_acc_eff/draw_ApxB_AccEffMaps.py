@@ -8,9 +8,9 @@
 # Two-step acceptance (matches AN): A_eta = mEta/mBin (mu |eta|<2.4); A_etapt = mPt/mEta (+ mu pt>3.5).
 # Eff stages: eRECO=mRec/mBin, eID=mIdt/mRec, eMuMu=mVtx/mIdt, eHLT=mHlt/mVtx, e4mu=mTrg/mHlt.
 # Uncertainties: binomial sqrt((N0-N1)*N1/N0)/N0.
-# Output: AccEffMaps_out/{Acc_2016,Eff_2016,Effevt_2016}/<AN name>.png  (+ .pdf for the 3 main-text figs)
+# Output: AccEffMaps_out/{Acc_2016,Eff_2016,Effevt_2016}/<AN name>.pdf
 # Run: python3 draw_ApxB_AccEffMaps.py   (PyROOT)
-import os, sys, ROOT
+import argparse, os, subprocess, sys, ROOT
 from ROOT import TH2D, TCanvas, TLatex, gStyle, gROOT
 from array import array
 
@@ -30,13 +30,23 @@ EFF = {
     "SPS": REPO + "/SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/plot/raw_efficiency_NLO.txt",
     "DPS": REPO + "/SKIM_tightfilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/plot/raw_efficiency.txt",
 }
-OUT = os.path.join(HERE, "AccEffMaps_out")
+parser = argparse.ArgumentParser(description="Draw the canonical acceptance and efficiency maps")
+parser.add_argument("--output-dir", default=os.path.join(HERE, "AccEffMaps_out"))
+args = parser.parse_args()
+OUT = os.path.abspath(args.output_dir)
 for sub in ("Acc_2016", "Eff_2016", "Effevt_2016"):
     os.makedirs(os.path.join(OUT, sub), exist_ok=True)
 
-# main-text Fig/AccEff figures that also need a .pdf copy
-PDF_ALSO = {"acc2d_a_eta_DPS", "recoeff2d_a_DPS", "recoeff2d_evt_SPS"}
-
+LAYOUTS = {
+    "pt_y": {
+        "canvas": (2400, 1200), "top": 0.11, "right": 0.18, "left": 0.11, "bottom": 0.15,
+        "x_offset": 1.15, "y_offset": 1.00, "z_offset": 1.05, "bin_text_size": 0.018,
+    },
+    "pt_pt": {
+        "canvas": (2400, 1800), "top": 0.11, "right": 0.18, "left": 0.12, "bottom": 0.16,
+        "x_offset": 1.20, "y_offset": 1.10, "z_offset": 1.05, "bin_text_size": 0.012,
+    },
+}
 
 def binom_err(n1, n0):
     if n0 <= 0:
@@ -76,27 +86,46 @@ def make_map(n, m, ptB, yB, rows, ncol, inum, iden, square=False):
     return eff, err
 
 
-def draw(h, xtitle, ytitle, ztitle, fmt, name, sublabel, sub, zlo=None, zhi=None, square=False):
-    w, ht = (1500, 1300) if square else (2200, 1000)
-    c = TCanvas("c", "c", w, ht)
-    c.SetTopMargin(0.10); c.SetRightMargin(0.17); c.SetLeftMargin(0.10); c.SetBottomMargin(0.12)
-    h.GetXaxis().SetTitle(xtitle)
-    h.GetYaxis().SetTitle(ytitle)
-    h.GetZaxis().SetTitle(ztitle)
-    h.GetXaxis().SetTitleOffset(1.1); h.GetYaxis().SetTitleOffset(0.9); h.GetZaxis().SetTitleOffset(0.6)
+def draw_bin_text(h, layout, value_kind):
+    precision = 2 if value_kind == "efficiency" else 3
+    labels = []
+    for ix in range(1, h.GetNbinsX() + 1):
+        for iy in range(1, h.GetNbinsY() + 1):
+            value = h.GetBinContent(ix, iy)
+            if value == 0.0:
+                continue
+            label = TLatex(h.GetXaxis().GetBinCenter(ix), h.GetYaxis().GetBinCenter(iy), ("%.*f" % (precision, value)))
+            label.SetTextAlign(22); label.SetTextFont(62); label.SetTextSize(LAYOUTS[layout]["bin_text_size"])
+            label.Draw(); labels.append(label)
+    return labels
+
+
+def draw_map(h, xtitle, ytitle, ztitle, name, sub, layout, value_kind, sample_label, zlo=None, zhi=None):
+    cfg = LAYOUTS[layout]
+    c = TCanvas("c_" + name, "", cfg["canvas"][0], cfg["canvas"][1])
+    c.SetTopMargin(cfg["top"]); c.SetRightMargin(cfg["right"]); c.SetLeftMargin(cfg["left"]); c.SetBottomMargin(cfg["bottom"])
+    h.GetXaxis().SetTitle(xtitle); h.GetYaxis().SetTitle(ytitle); h.GetZaxis().SetTitle(ztitle)
+    h.GetXaxis().SetTitleOffset(cfg["x_offset"]); h.GetYaxis().SetTitleOffset(cfg["y_offset"]); h.GetZaxis().SetTitleOffset(cfg["z_offset"])
+    for axis in (h.GetXaxis(), h.GetYaxis(), h.GetZaxis()):
+        axis.SetTitleSize(0.050); axis.SetLabelSize(0.040)
     h.GetXaxis().SetNdivisions(505); h.GetYaxis().SetNdivisions(505)
     if zlo is not None:
         h.GetZaxis().SetRangeUser(zlo, zhi)
-    gStyle.SetPaintTextFormat(fmt)
-    h.Draw("colzTEXT")
-    lat = TLatex(); lat.SetNDC(); lat.SetTextFont(42); lat.SetTextSize(0.040)
-    lat.DrawLatex(0.10, 0.925, "#bf{CMS} Preliminary")
-    lat.DrawLatex(0.50, 0.925, sublabel)
-    lat.DrawLatex(0.80, 0.925, "#sqrt{s} = 13 TeV")
-    png = os.path.join(OUT, sub, name + "_JJto4mu.png")
-    c.SaveAs(png)
-    if name in PDF_ALSO:
-        c.SaveAs(os.path.join(OUT, sub, name + "_JJto4mu.pdf"))
+    h.Draw("COLZ")
+    bin_labels = draw_bin_text(h, layout, value_kind)
+    cms = TLatex(); cms.SetNDC(); cms.SetTextFont(61); cms.SetTextSize(0.040)
+    cms.DrawLatex(cfg["left"], 0.925, "CMS")
+    extra = TLatex(); extra.SetNDC(); extra.SetTextFont(52); extra.SetTextSize(0.034)
+    extra.DrawLatex(cfg["left"] + 0.075, 0.925, "Simulation Preliminary")
+    sample = TLatex(); sample.SetNDC(); sample.SetTextFont(42); sample.SetTextAlign(22); sample.SetTextSize(0.034)
+    sample.DrawLatex(0.56, 0.925, sample_label)
+    energy = TLatex(); energy.SetNDC(); energy.SetTextFont(42); energy.SetTextAlign(31); energy.SetTextSize(0.040)
+    energy.DrawLatex(1.0 - cfg["right"], 0.925, "13 TeV")
+    output_base = os.path.join(OUT, sub, name + "_JJto4mu")
+    eps_path = output_base + ".eps"
+    c.SaveAs(eps_path)
+    subprocess.check_call(["ps2pdf", "-dEPSCrop", eps_path, output_base + ".pdf"])
+    os.remove(eps_path)
     del c
 
 
@@ -104,35 +133,37 @@ XJ, YJ = "p_{T}(J/#psi) [GeV]", "y(J/#psi)"
 XE, YE = "p_{T}(J/#psi_{1}) [GeV]", "p_{T}(J/#psi_{2}) [GeV]"
 
 for S in ("SPS", "DPS"):
-    lbl = "%s_JJto4mu" % S
-    # ---------- acceptance (Pythia8 GEN) : cols mEta mPt mBin ----------
+    acceptance_label = "Pythia8 %s" % S
+    efficiency_label = "HELAC-Onia NLO* SPS" if S == "SPS" else "Pythia8 DPS"
     if os.path.exists(ACC[S]):
         ptB, yB, n, m, arows, _ = read_table(ACC[S], 3)
-        eEta, dEta = make_map(n, m, ptB, yB, arows, 3, 0, 2)            # A_eta = mEta/mBin
-        ePt, dPt = make_map(n, m, ptB, yB, arows, 3, 1, 0)             # A_etapt = mPt/mEta
-        draw(eEta, XJ, YJ, "A_{#eta(#mu)}(J/#psi)", "1.2f", "acc2d_a_eta_%s" % S, lbl, "Acc_2016", 0., 1.)
-        draw(dEta, XJ, YJ, "uncertainty", "1.3f", "dacc2d_a_eta_%s" % S, lbl, "Acc_2016")
-        draw(ePt, XJ, YJ, "A_{p_{T}(#mu)}(J/#psi)", "1.2f", "acc2d_a_etapt_%s" % S, lbl, "Acc_2016", 0., 1.)
-        draw(dPt, XJ, YJ, "uncertainty", "1.3f", "dacc2d_a_etapt_%s" % S, lbl, "Acc_2016")
+        eEta, dEta = make_map(n, m, ptB, yB, arows, 3, 0, 2)
+        ePt, dPt = make_map(n, m, ptB, yB, arows, 3, 1, 0)
+        draw_map(eEta, XJ, YJ, "A_{#eta(#mu)}(J/#psi)", "acc2d_a_eta_%s" % S, "Acc_2016", "pt_y", "efficiency", acceptance_label, 0., 1.)
+        draw_map(dEta, XJ, YJ, "Uncertainty", "dacc2d_a_eta_%s" % S, "Acc_2016", "pt_y", "uncertainty", acceptance_label)
+        draw_map(ePt, XJ, YJ, "A_{p_{T}(#mu)}(J/#psi)", "acc2d_a_etapt_%s" % S, "Acc_2016", "pt_y", "efficiency", acceptance_label, 0., 1.)
+        draw_map(dPt, XJ, YJ, "Uncertainty", "dacc2d_a_etapt_%s" % S, "Acc_2016", "pt_y", "uncertainty", acceptance_label)
     else:
-        print("[skip acc %s] missing %s (acc job still running)" % (S, ACC[S]))
-    # ---------- efficiency : Jpsi cols mVtx mIdt mRec mBin ; evt cols mTrg mHlt mVtx ----------
+        print("[skip acc %s] missing %s" % (S, ACC[S]))
+
     ptB, yB, n, m, jrows, erows = read_table(EFF[S], 4, per_bin_evt=1)
-    eRec, dRec = make_map(n, m, ptB, yB, jrows, 4, 2, 3)            # eRECO = mRec/mBin
-    eId, dId = make_map(n, m, ptB, yB, jrows, 4, 1, 2)             # eID  = mIdt/mRec
-    eVtx, dVtx = make_map(n, m, ptB, yB, jrows, 4, 0, 1)           # eMuMu= mVtx/mIdt
-    draw(eRec, XJ, YJ, "#epsilon_{RECO(#mu)}(J/#psi)", "1.2f", "recoeff2d_a_%s" % S, lbl, "Eff_2016", 0., 1.)
-    draw(dRec, XJ, YJ, "uncertainty", "1.3f", "drecoeff2d_a_%s" % S, lbl, "Eff_2016")
-    draw(eId, XJ, YJ, "#epsilon_{ID(#mu)}(J/#psi)", "1.2f", "recoeff2d_id_a_%s" % S, lbl, "Eff_2016", 0., 1.)
-    draw(dId, XJ, YJ, "uncertainty", "1.3f", "drecoeff2d_id_a_%s" % S, lbl, "Eff_2016")
-    draw(eVtx, XJ, YJ, "#epsilon_{#mu#mu}(J/#psi)", "1.2f", "recoeff2d_id_vtx_a_%s" % S, lbl, "Eff_2016", 0., 1.)
-    draw(dVtx, XJ, YJ, "uncertainty", "1.3f", "drecoeff2d_id_vtx_a_%s" % S, lbl, "Eff_2016")
-    # evt maps (pt1 vs pt2)
-    eHlt, dHlt = make_map(n, n, ptB, yB, erows, 3, 1, 2, square=True)   # eHLT = mHlt/mVtx
-    eEvt, dEvt = make_map(n, n, ptB, yB, erows, 3, 0, 1, square=True)   # e4mu = mTrg/mHlt
-    draw(eHlt, XE, YE, "#epsilon_{HLT}", "1.2f", "recoeff2d_trg_%s" % S, lbl, "Effevt_2016", 0., 1., square=True)
-    draw(dHlt, XE, YE, "uncertainty", "1.3f", "drecoeff2d_trg_%s" % S, lbl, "Effevt_2016", square=True)
-    draw(eEvt, XE, YE, "#epsilon_{4#mu}", "1.2f", "recoeff2d_evt_%s" % S, lbl, "Effevt_2016", 0., 1., square=True)
-    draw(dEvt, XE, YE, "uncertainty", "1.3f", "drecoeff2d_evt_%s" % S, lbl, "Effevt_2016", square=True)
+    eRec, dRec = make_map(n, m, ptB, yB, jrows, 4, 2, 3)
+    eId, dId = make_map(n, m, ptB, yB, jrows, 4, 1, 2)
+    eVtx, dVtx = make_map(n, m, ptB, yB, jrows, 4, 0, 1)
+    draw_map(eRec, XJ, YJ, "#epsilon_{RECO(#mu)}(J/#psi)", "recoeff2d_a_%s" % S, "Eff_2016", "pt_y", "efficiency", efficiency_label, 0., 1.)
+    draw_map(dRec, XJ, YJ, "Uncertainty", "drecoeff2d_a_%s" % S, "Eff_2016", "pt_y", "uncertainty", efficiency_label)
+    draw_map(eId, XJ, YJ, "#epsilon_{ID(#mu)}(J/#psi)", "recoeff2d_id_a_%s" % S, "Eff_2016", "pt_y", "efficiency", efficiency_label, 0., 1.)
+    draw_map(dId, XJ, YJ, "Uncertainty", "drecoeff2d_id_a_%s" % S, "Eff_2016", "pt_y", "uncertainty", efficiency_label)
+    draw_map(eVtx, XJ, YJ, "#epsilon_{#mu#mu}(J/#psi)", "recoeff2d_id_vtx_a_%s" % S, "Eff_2016", "pt_y", "efficiency", efficiency_label, 0., 1.)
+    draw_map(dVtx, XJ, YJ, "Uncertainty", "drecoeff2d_id_vtx_a_%s" % S, "Eff_2016", "pt_y", "uncertainty", efficiency_label)
+
+    eHlt, dHlt = make_map(n, n, ptB, yB, erows, 3, 1, 2, square=True)
+    eEvt, dEvt = make_map(n, n, ptB, yB, erows, 3, 0, 1, square=True)
+    draw_map(eHlt, XE, YE, "#epsilon_{HLT}", "recoeff2d_trg_%s" % S, "Effevt_2016", "pt_pt", "efficiency", efficiency_label, 0., 1.)
+    draw_map(dHlt, XE, YE, "Uncertainty", "drecoeff2d_trg_%s" % S, "Effevt_2016", "pt_pt", "uncertainty", efficiency_label)
+    draw_map(eEvt, XE, YE, "#epsilon_{evt}", "recoeff2d_evt_%s" % S, "Effevt_2016", "pt_pt", "efficiency", efficiency_label, 0., 1.)
+    draw_map(dEvt, XE, YE, "Uncertainty", "drecoeff2d_evt_%s" % S, "Effevt_2016", "pt_pt", "uncertainty", efficiency_label)
+
+subprocess.check_call([sys.executable, os.path.join(HERE, "draw_ApxB_TotalEfficiencyMaps.py"), "--output-dir", OUT])
 
 print("AccEffMaps done ->", OUT)

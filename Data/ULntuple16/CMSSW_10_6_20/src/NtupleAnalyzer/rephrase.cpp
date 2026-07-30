@@ -146,8 +146,8 @@ class Process {
                 JpsiLV2.SetPtEtaPhiM(REJpsi_pt->at(JpsiId2), REJpsi_eta->at(JpsiId2), REJpsi_phi->at(JpsiId2), REJpsi_mass->at(JpsiId2));
 
                 // if(REevt_fourMuMass->at(j) <= 57.5 || REevt_fourMuMass->at(j) > 67.5) continue;
-                evt_mass.push_back((JpsiLV1 + JpsiLV2).M());
                 if((JpsiLV1 + JpsiLV2).M() < 7.5) continue;
+                evt_mass.push_back((JpsiLV1 + JpsiLV2).M());
                 evt_mass2.push_back(REevt_fourMuMass->at(j));
 
                 // double deltaPhi = PI - fabs(fabs(REJpsi_phi->at(JpsiId) - REpsi2S_phi->at(psi2SId)) - PI);
