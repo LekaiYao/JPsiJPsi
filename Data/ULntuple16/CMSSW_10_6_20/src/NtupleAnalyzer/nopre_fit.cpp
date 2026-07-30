@@ -1,26 +1,27 @@
-#include "TCanvas.h"
-#include "TH2F.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TLegend.h"
-#include "TLatex.h"
-#include "RooAbsPdf.h"
-#include "RooExtendPdf.h"
-#include "RooRealVar.h"
-#include "RooPlot.h"
-#include "RooDataSet.h"
-#include "RooAddPdf.h"
-#include "RooArgList.h"
-#include "RooFitResult.h"
-#include "RooGaussian.h"
-#include "RooGExpModel.h"
-#include "RooCBShape.h"
-#include "RooChebychev.h"
-#include "RooProdPdf.h"
-#include "RooFitResult.h"
+// #include "TCanvas.h"
+// #include "TH2F.h"
+// #include "TFile.h"
+// #include "TTree.h"
+// #include "TLegend.h"
+// #include "TLatex.h"
+// #include "RooAbsPdf.h"
+// #include "RooExtendPdf.h"
+// #include "RooRealVar.h"
+// #include "RooPlot.h"
+// #include "RooDataSet.h"
+// #include "RooAddPdf.h"
+// #include "RooArgList.h"
+// #include "RooFitResult.h"
+// #include "RooGaussian.h"
+// #include "RooGExpModel.h"
+// #include "RooCBShape.h"
+// #include "RooChebychev.h"
+// #include "RooProdPdf.h"
+// #include "RooFitResult.h"
 
-using namespace std;
-using namespace RooFit;
+// using namespace std;
+// using namespace RooFit;
+#include "Plot_4D.hpp"
 
 void nopre_fit() {
     Int_t N = 100000, BinNum = 100;
@@ -47,8 +48,10 @@ void nopre_fit() {
     RooRealVar Jpsi_nx1("Jpsi_nx1", "Jpsi_nx1", 1, 0, 50);
     RooRealVar Jpsi_devia2("Jpsi_devia2", "Jpsi_devia2", 0.05, 0.02, 0.08);
     // RooRealVar Jpsi_alpha2("Jpsi_alpha2", "Jpsi_alpha2", 1.5, 0.1, 3.5);
-    // RooRealVar Jpsi_nx2("Jpsi_nx2", "Jpsi_nx2", 1, 0, 120);
-    RooRealVar Jpsi_ratio("Jpsi_ratio", "Jpsi_ratio", 0.6, 0, 1);
+    // RooRealVar Jpsi_nx2("Jpsi_nx2", "Jpsi_nx2", 1, 0, 100);
+    RooRealVar Jpsi_devia3("Jpsi_devia3", "Jpsi_devia3", 0.06, 0.001, 0.1);
+    RooRealVar Jpsi_ratio1("Jpsi_ratio1", "Jpsi_ratio1", 0.6, 0, 1);
+    // RooRealVar Jpsi_ratio2("Jpsi_ratio2", "Jpsi_ratio2", 0.3, 0, 1);
     RooCBShape Jpsi_crysBall1_1("Jpsi_crysBall1_1", "Jpsi_crysBall1_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1, Jpsi_alpha1, Jpsi_nx1);
     // RooGaussian Jpsi_crysBall1_1("Jpsi_crysBall1_1", "Jpsi_crysBall1_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1);
     // RooCBShape Jpsi_crysBall2_1("Jpsi_crysBall2_1", "Jpsi_crysBall2_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia2, Jpsi_alpha2, Jpsi_nx2);
@@ -57,29 +60,56 @@ void nopre_fit() {
     // RooGaussian Jpsi_crysBall1_2("Jpsi_crysBall1_2", "Jpsi_crysBall1_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia1);
     // RooCBShape Jpsi_crysBall2_2("Jpsi_crysBall2_2", "Jpsi_crysBall2_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia2, Jpsi_alpha2, Jpsi_nx2);
     RooGaussian Jpsi_crysBall2_2("Jpsi_crysBall2_2", "Jpsi_crysBall2_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia2);
-    RooAddPdf JpsiMassSig1("JpsiMassSig1", "JpsiMassSig1", RooArgList(Jpsi_crysBall1_1, Jpsi_crysBall2_1), Jpsi_ratio);
-    RooAddPdf JpsiMassSig2("JpsiMassSig2", "JpsiMassSig2", RooArgList(Jpsi_crysBall1_2, Jpsi_crysBall2_2), Jpsi_ratio);
+    // RooGaussian Jpsi_crysBall3_1("Jpsi_crysBall3_1", "Jpsi_crysBall3_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia3);
+    // RooGaussian Jpsi_crysBall3_2("Jpsi_crysBall3_2", "Jpsi_crysBall3_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia3);
+    RooAddPdf JpsiMassSig1("JpsiMassSig1", "JpsiMassSig1", RooArgList(Jpsi_crysBall1_1, Jpsi_crysBall2_1), Jpsi_ratio1);
+    RooAddPdf JpsiMassSig2("JpsiMassSig2", "JpsiMassSig2", RooArgList(Jpsi_crysBall1_2, Jpsi_crysBall2_2), Jpsi_ratio1);
+    // RooAddPdf JpsiMassSig1("JpsiMassSig1", "JpsiMassSig1", RooArgList(Jpsi_crysBall1_1, Jpsi_crysBall2_1, Jpsi_crysBall3_1), RooArgList(Jpsi_ratio1, Jpsi_ratio2));
+    // RooAddPdf JpsiMassSig2("JpsiMassSig2", "JpsiMassSig2", RooArgList(Jpsi_crysBall1_2, Jpsi_crysBall2_2, Jpsi_crysBall3_2), RooArgList(Jpsi_ratio1, Jpsi_ratio2));
     // Background p.d.f.
+    // RooRealVar Jpsi_a("Jpsi_a", "Jpsi_a", 0, -1, 1);
     RooChebychev JpsiMassComb1("JpsiMassComb1", "JpsiMassComb1", Jpsi_mass1, RooArgList());
     RooChebychev JpsiMassComb2("JpsiMassComb2", "JpsiMassComb2", Jpsi_mass2, RooArgList());
+    // RooChebychev JpsiMassComb1("JpsiMassComb1", "JpsiMassComb1", Jpsi_mass1, RooArgList(Jpsi_a));
+    // RooChebychev JpsiMassComb2("JpsiMassComb2", "JpsiMassComb2", Jpsi_mass2, RooArgList(Jpsi_a));
 
     // Define J/psi Ctau p.d.f.
     // Signal p.d.f.
     RooRealVar Jpsi_mu1("Jpsi_mu1", "Jpsi_mu1", 0, -0.005, 0.005);
     RooRealVar Jpsi_sigma1("Jpsi_sigma1", "Jpsi_sigma1", 0.001, 0, 0.003);
-    RooRealVar Jpsi_sigma2("Jpsi_sigma2", "Jpsi_sigma2", 0.004, 0.002, 0.008);
-    RooRealVar Jpsi_prop1("Jpsi_prop1", "Jpsi_prop1", 0.5, 0, 1);
-    RooGaussian Jpsi_gauss1_1("Jpsi_gauss1_1", "Jpsi_gauss1_1", Jpsi_ctau1, Jpsi_mu1, Jpsi_sigma1);
-    RooGaussian Jpsi_gauss2_1("Jpsi_gauss2_1", "Jpsi_gauss2_1", Jpsi_ctau1, Jpsi_mu1, Jpsi_sigma2);
-    RooGaussian Jpsi_gauss1_2("Jpsi_gauss1_2", "Jpsi_gauss1_2", Jpsi_ctau2, Jpsi_mu1, Jpsi_sigma1);
-    RooGaussian Jpsi_gauss2_2("Jpsi_gauss2_2", "Jpsi_gauss2_2", Jpsi_ctau2, Jpsi_mu1, Jpsi_sigma2);
-    RooAddPdf JpsiCtauSig1("JpsiCtauSig1", "JpsiCtauSig1", RooArgList(Jpsi_gauss1_1, Jpsi_gauss2_1), Jpsi_prop1);
-    RooAddPdf JpsiCtauSig2("JpsiCtauSig2", "JpsiCtauSig2", RooArgList(Jpsi_gauss1_2, Jpsi_gauss2_2), Jpsi_prop1);
+    // RooRealVar Jpsi_sigma2("Jpsi_sigma2", "Jpsi_sigma2", 0.004, 0.002, 0.008);
+    // RooRealVar Jpsi_sigma4("Jpsi_sigma4", "Jpsi_sigma4", 0.006, 0.0001, 0.01);
+    // RooRealVar Jpsi_prop1("Jpsi_prop1", "Jpsi_prop1", 0.5, 0, 1);
+    // RooRealVar Jpsi_prop3("Jpsi_prop3", "Jpsi_prop3", 0.5, 0, 1);
+    // RooGaussian Jpsi_gauss1_1("Jpsi_gauss1_1", "Jpsi_gauss1_1", Jpsi_ctau1, Jpsi_mu1, Jpsi_sigma1);
+    // RooGaussian Jpsi_gauss2_1("Jpsi_gauss2_1", "Jpsi_gauss2_1", Jpsi_ctau1, Jpsi_mu1, Jpsi_sigma2);
+    // RooGaussian Jpsi_gauss3_1("Jpsi_gauss3_1", "Jpsi_gauss3_1", Jpsi_ctau1, Jpsi_mu1, Jpsi_sigma4);
+    // RooGaussian Jpsi_gauss1_2("Jpsi_gauss1_2", "Jpsi_gauss1_2", Jpsi_ctau2, Jpsi_mu1, Jpsi_sigma1);
+    // RooGaussian Jpsi_gauss2_2("Jpsi_gauss2_2", "Jpsi_gauss2_2", Jpsi_ctau2, Jpsi_mu1, Jpsi_sigma2);
+    // RooGaussian Jpsi_gauss3_2("Jpsi_gauss3_2", "Jpsi_gauss3_2", Jpsi_ctau2, Jpsi_mu1, Jpsi_sigma4);
+    // RooAddPdf JpsiCtauSig1("JpsiCtauSig1", "JpsiCtauSig1", RooArgList(Jpsi_gauss1_1, Jpsi_gauss2_1), Jpsi_prop1);
+    // RooAddPdf JpsiCtauSig2("JpsiCtauSig2", "JpsiCtauSig2", RooArgList(Jpsi_gauss1_2, Jpsi_gauss2_2), Jpsi_prop1);
+    // RooAddPdf JpsiCtauSig1("JpsiCtauSig1", "JpsiCtauSig1", RooArgList(Jpsi_gauss1_1, Jpsi_gauss2_1, Jpsi_gauss3_1), RooArgList(Jpsi_prop1, Jpsi_prop3));
+    // RooAddPdf JpsiCtauSig2("JpsiCtauSig2", "JpsiCtauSig2", RooArgList(Jpsi_gauss1_2, Jpsi_gauss2_2, Jpsi_gauss3_2), RooArgList(Jpsi_prop1, Jpsi_prop3));
+    RooGaussian JpsiCtauSig1("Jpsi_gauss1_1", "Jpsi_gauss1_1", Jpsi_ctau1, Jpsi_mu1, Jpsi_sigma1);
+    RooGaussian JpsiCtauSig2("Jpsi_gauss1_2", "Jpsi_gauss1_2", Jpsi_ctau2, Jpsi_mu1, Jpsi_sigma1);
+
     // Background p.d.f.
     RooRealVar Jpsi_sigma3("Jpsi_sigma3", "Jpsi_sigma3", 0.001, 0, 0.01);
+    // RooRealVar Jpsi_sigma5("Jpsi_sigma5", "Jpsi_sigma5", 0.005, 0.001, 0.02);
     RooRealVar Jpsi_coef1("Jpsi_coef1", "Jpsi_coef1", 0.06, 0.01, 0.1);
+    // RooRealVar Jpsi_coef2("Jpsi_coef2", "Jpsi_coef2", 0.03, 0.02, 0.5);
+    // RooRealVar Jpsi_prop4("Jpsi_prop4", "Jpsi_prop4", 0.5, 0, 1);
     RooGExpModel JpsiCtauBkg1("JpsiCtauBkg1", "JpsiCtauBkg1", Jpsi_ctau1, Jpsi_sigma3, Jpsi_coef1, false, RooGExpModel::Type::Flipped);
     RooGExpModel JpsiCtauBkg2("JpsiCtauBkg2", "JpsiCtauBkg2", Jpsi_ctau2, Jpsi_sigma3, Jpsi_coef1, false, RooGExpModel::Type::Flipped);
+    // RooGExpModel Jpsi_expgs1_1("Jpsi_expgs1_1", "Jpsi_expgs1_1", Jpsi_ctau1, Jpsi_sigma3, Jpsi_coef1, false, RooGExpModel::Type::Flipped);
+    // RooGExpModel Jpsi_expgs2_1("Jpsi_expgs2_1", "Jpsi_expgs2_1", Jpsi_ctau1, Jpsi_sigma5, Jpsi_coef1, false, RooGExpModel::Type::Flipped);
+    // RooGExpModel Jpsi_expgs2_1("Jpsi_expgs2_1", "Jpsi_expgs2_1", Jpsi_ctau1, Jpsi_sigma3, Jpsi_coef2, false, RooGExpModel::Type::Flipped);
+    // RooGExpModel Jpsi_expgs1_2("Jpsi_expgs1_2", "Jpsi_expgs1_2", Jpsi_ctau2, Jpsi_sigma3, Jpsi_coef1, false, RooGExpModel::Type::Flipped);
+    // RooGExpModel Jpsi_expgs2_2("Jpsi_expgs1_2", "Jpsi_expgs1_2", Jpsi_ctau2, Jpsi_sigma5, Jpsi_coef1, false, RooGExpModel::Type::Flipped);
+    // RooGExpModel Jpsi_expgs2_2("Jpsi_expgs2_2", "Jpsi_expgs2_2", Jpsi_ctau2, Jpsi_sigma3, Jpsi_coef2, false, RooGExpModel::Type::Flipped);
+    // RooAddPdf JpsiCtauBkg1("JpsiCtauBkg1", "JpsiCtauBkg1", RooArgList(Jpsi_expgs1_1, Jpsi_expgs2_1), Jpsi_prop4);
+    // RooAddPdf JpsiCtauBkg2("JpsiCtauBkg2", "JpsiCtauBkg2", RooArgList(Jpsi_expgs1_2, Jpsi_expgs2_2), Jpsi_prop4);
     // Combinatorial signal p.d.f.
     RooRealVar Jpsi_prop2("Jpsi_prop2", "Jpsi_prop2", 0.5, 0, 1);
     RooAddPdf JpsiCtauCombSig1("JpsiCtauCombSig1", "JpsiCtauCombSig1", RooArgList(JpsiCtauSig1, JpsiCtauBkg1), Jpsi_prop2);
@@ -139,111 +169,114 @@ void nopre_fit() {
     }
     // res = pdf_all.fitTo(*data->reduce(RooArgSet(Jpsi_mass1, Jpsi_mass2, Jpsi_ctau1, Jpsi_ctau2)), Save());
     // Draw data point and p.d.f. curve
-    TCanvas *canvas7 = new TCanvas("canvas7", "canvas7", 1500, 1000);
-    RooPlot *frame7 = Jpsi_mass1.frame(RooFit::Title("Jpsi-1 Mass 4D"), Bins(BinNum));
-    data->plotOn(frame7, DataError(RooAbsData::SumW2), Name("Data"));
-    pdf_all.plotOn(frame7, LineColor(kBlack), LineWidth(2), Name("All"));
-    pdf_all.plotOn(frame7, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
-    pdf_all.plotOn(frame7, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
-    pdf_all.plotOn(frame7, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
-    pdf_all.plotOn(frame7, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
-    pdf_all.plotOn(frame7, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
-    pdf_all.plotOn(frame7, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
-    pdf_all.plotOn(frame7, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
-    TLegend *legend7 = new TLegend(.65, .60, .85, .85);
-    legend7->AddEntry(frame7->findObject("Data"), "RunII 2018", "L");
-    legend7->AddEntry(frame7->findObject("All"), "Total p.d.f.", "L");
-    legend7->AddEntry(frame7->findObject("P_P"), "prompt, prompt", "L");
-    legend7->AddEntry(frame7->findObject("P_NP"), "prompt, non-prompt", "L");
-    legend7->AddEntry(frame7->findObject("NP_P"), "non-prompt, prompt", "L");
-    legend7->AddEntry(frame7->findObject("NP_NP"), "non-prompt, non-prompt", "L");
-    legend7->AddEntry(frame7->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
-    legend7->AddEntry(frame7->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
-    legend7->AddEntry(frame7->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
-    frame7->Draw();
-    legend7->DrawClone();
-    // canvas7->SaveAs("fits/4D_JpsiMass.pdf");
-    canvas7->SaveAs("fits/4D_JpsiMass1.png");
-    TCanvas *canvas8 = new TCanvas("canvas8", "canvas8", 1500, 1000);
-    RooPlot *frame8 = Jpsi_mass2.frame(RooFit::Title("Jpsi-2 Mass 4D"), Bins(BinNum));
-    data->plotOn(frame8, DataError(RooAbsData::SumW2), Name("Data"));
-    pdf_all.plotOn(frame8, LineColor(kBlack), LineWidth(2), Name("All"));
-    pdf_all.plotOn(frame8, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
-    pdf_all.plotOn(frame8, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
-    pdf_all.plotOn(frame8, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
-    pdf_all.plotOn(frame8, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
-    pdf_all.plotOn(frame8, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
-    pdf_all.plotOn(frame8, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
-    pdf_all.plotOn(frame8, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
-    TLegend *legend8 = new TLegend(.65, .60, .85, .85);
-    legend8->AddEntry(frame8->findObject("Data"), "RunII 2018", "L");
-    legend8->AddEntry(frame8->findObject("All"), "Total p.d.f.", "L");
-    legend8->AddEntry(frame8->findObject("P_P"), "prompt, prompt", "L");
-    legend8->AddEntry(frame8->findObject("P_NP"), "prompt, non-prompt", "L");
-    legend8->AddEntry(frame8->findObject("NP_P"), "non-prompt, prompt", "L");
-    legend8->AddEntry(frame8->findObject("NP_NP"), "non-prompt, non-prompt", "L");
-    legend8->AddEntry(frame8->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
-    legend8->AddEntry(frame8->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
-    legend8->AddEntry(frame8->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
-    frame8->Draw();
-    legend8->DrawClone();
-    // canvas8->SaveAs("fits/4D_psi2SMass.pdf");
-    canvas8->SaveAs("fits/4D_JpsiMass2.png");
-    TCanvas *canvas9 = new TCanvas("canvas9", "canvas9", 1500, 1000);
-    RooPlot *frame9 = Jpsi_ctau1.frame(RooFit::Title("Jpsi-1 Ctau 4D"), Bins(BinNum));
-    data->plotOn(frame9, DataError(RooAbsData::SumW2), Name("Data"));
-    pdf_all.plotOn(frame9, LineColor(kBlack), LineWidth(2), Name("All"));
-    pdf_all.plotOn(frame9, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
-    pdf_all.plotOn(frame9, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
-    pdf_all.plotOn(frame9, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
-    pdf_all.plotOn(frame9, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
-    pdf_all.plotOn(frame9, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
-    pdf_all.plotOn(frame9, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
-    pdf_all.plotOn(frame9, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
-    TLegend *legend9 = new TLegend(.65, .60, .85, .85);
-    legend9->AddEntry(frame9->findObject("Data"), "RunII 2018", "L");
-    legend9->AddEntry(frame9->findObject("All"), "Total p.d.f.", "L");
-    legend9->AddEntry(frame9->findObject("P_P"), "prompt, prompt", "L");
-    legend9->AddEntry(frame9->findObject("P_NP"), "prompt, non-prompt", "L");
-    legend9->AddEntry(frame9->findObject("NP_P"), "non-prompt, prompt", "L");
-    legend9->AddEntry(frame9->findObject("NP_NP"), "non-prompt, non-prompt", "L");
-    legend9->AddEntry(frame9->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
-    legend9->AddEntry(frame9->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
-    legend9->AddEntry(frame9->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
-    frame9->SetAxisRange(1, 5e3, "Y");
-    gPad->SetLogy();
-    frame9->Draw();
-    legend9->DrawClone();
-    // canvas9->SaveAs("fits/4D_JpsiCtau.pdf");
-    canvas9->SaveAs("fits/4D_JpsiCtau1.png");
-    TCanvas *canvas0 = new TCanvas("canvas0", "canvas0", 1500, 1000);
-    RooPlot *frame0 = Jpsi_ctau2.frame(RooFit::Title("Jpsi-2 Ctau 4D"), Bins(BinNum));
-    data->plotOn(frame0, DataError(RooAbsData::SumW2), Name("Data"));
-    pdf_all.plotOn(frame0, LineColor(kBlack), LineWidth(2), Name("All"));
-    pdf_all.plotOn(frame0, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
-    pdf_all.plotOn(frame0, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
-    pdf_all.plotOn(frame0, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
-    pdf_all.plotOn(frame0, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
-    pdf_all.plotOn(frame0, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
-    pdf_all.plotOn(frame0, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
-    pdf_all.plotOn(frame0, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
-    TLegend *legend0 = new TLegend(.65, .60, .85, .85);
-    legend0->AddEntry(frame0->findObject("Data"), "RunII 2018", "L");
-    legend0->AddEntry(frame0->findObject("All"), "Total p.d.f.", "L");
-    legend0->AddEntry(frame0->findObject("P_P"), "prompt, prompt", "L");
-    legend0->AddEntry(frame0->findObject("P_NP"), "prompt, non-prompt", "L");
-    legend0->AddEntry(frame0->findObject("NP_P"), "non-prompt, prompt", "L");
-    legend0->AddEntry(frame0->findObject("NP_NP"), "non-prompt, non-prompt", "L");
-    legend0->AddEntry(frame0->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
-    legend0->AddEntry(frame0->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
-    legend0->AddEntry(frame0->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
-    frame0->SetAxisRange(1, 5e3, "Y");
-    gPad->SetLogy();
-    frame0->Draw();
-    legend0->DrawClone();
-    // canvas0->SaveAs("fits/4D_psi2SCtau.pdf");
-    canvas0->SaveAs("fits/4D_JpsiCtau2.png");
+    string prefix = "fits/";
+    Plot_4D(data, pdf_all, pdf_P_P, pdf_P_NP, pdf_NP_P, pdf_NP_NP, pdf_Sig_Comb, pdf_Comb_Sig, pdf_Comb_Comb,
+        prefix, Jpsi_mass1, Jpsi_mass2, Jpsi_ctau1, Jpsi_ctau2);
+    // TCanvas *canvas7 = new TCanvas("canvas7", "canvas7", 1500, 1000);
+    // RooPlot *frame7 = Jpsi_mass1.frame(RooFit::Title("Jpsi-1 Mass 4D"), Bins(BinNum));
+    // data->plotOn(frame7, DataError(RooAbsData::SumW2), Name("Data"));
+    // pdf_all.plotOn(frame7, LineColor(kBlack), LineWidth(2), Name("All"));
+    // pdf_all.plotOn(frame7, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
+    // pdf_all.plotOn(frame7, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
+    // pdf_all.plotOn(frame7, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
+    // pdf_all.plotOn(frame7, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
+    // pdf_all.plotOn(frame7, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
+    // pdf_all.plotOn(frame7, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
+    // pdf_all.plotOn(frame7, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
+    // TLegend *legend7 = new TLegend(.65, .60, .85, .85);
+    // legend7->AddEntry(frame7->findObject("Data"), "RunII 2018", "L");
+    // legend7->AddEntry(frame7->findObject("All"), "Total p.d.f.", "L");
+    // legend7->AddEntry(frame7->findObject("P_P"), "prompt, prompt", "L");
+    // legend7->AddEntry(frame7->findObject("P_NP"), "prompt, non-prompt", "L");
+    // legend7->AddEntry(frame7->findObject("NP_P"), "non-prompt, prompt", "L");
+    // legend7->AddEntry(frame7->findObject("NP_NP"), "non-prompt, non-prompt", "L");
+    // legend7->AddEntry(frame7->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
+    // legend7->AddEntry(frame7->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
+    // legend7->AddEntry(frame7->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
+    // frame7->Draw();
+    // legend7->DrawClone();
+    // // canvas7->SaveAs("fits/4D_JpsiMass.pdf");
+    // canvas7->SaveAs("fits/4D_JpsiMass1.png");
+    // TCanvas *canvas8 = new TCanvas("canvas8", "canvas8", 1500, 1000);
+    // RooPlot *frame8 = Jpsi_mass2.frame(RooFit::Title("Jpsi-2 Mass 4D"), Bins(BinNum));
+    // data->plotOn(frame8, DataError(RooAbsData::SumW2), Name("Data"));
+    // pdf_all.plotOn(frame8, LineColor(kBlack), LineWidth(2), Name("All"));
+    // pdf_all.plotOn(frame8, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
+    // pdf_all.plotOn(frame8, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
+    // pdf_all.plotOn(frame8, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
+    // pdf_all.plotOn(frame8, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
+    // pdf_all.plotOn(frame8, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
+    // pdf_all.plotOn(frame8, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
+    // pdf_all.plotOn(frame8, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
+    // TLegend *legend8 = new TLegend(.65, .60, .85, .85);
+    // legend8->AddEntry(frame8->findObject("Data"), "RunII 2018", "L");
+    // legend8->AddEntry(frame8->findObject("All"), "Total p.d.f.", "L");
+    // legend8->AddEntry(frame8->findObject("P_P"), "prompt, prompt", "L");
+    // legend8->AddEntry(frame8->findObject("P_NP"), "prompt, non-prompt", "L");
+    // legend8->AddEntry(frame8->findObject("NP_P"), "non-prompt, prompt", "L");
+    // legend8->AddEntry(frame8->findObject("NP_NP"), "non-prompt, non-prompt", "L");
+    // legend8->AddEntry(frame8->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
+    // legend8->AddEntry(frame8->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
+    // legend8->AddEntry(frame8->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
+    // frame8->Draw();
+    // legend8->DrawClone();
+    // // canvas8->SaveAs("fits/4D_psi2SMass.pdf");
+    // canvas8->SaveAs("fits/4D_JpsiMass2.png");
+    // TCanvas *canvas9 = new TCanvas("canvas9", "canvas9", 1500, 1000);
+    // RooPlot *frame9 = Jpsi_ctau1.frame(RooFit::Title("Jpsi-1 Ctau 4D"), Bins(BinNum));
+    // data->plotOn(frame9, DataError(RooAbsData::SumW2), Name("Data"));
+    // pdf_all.plotOn(frame9, LineColor(kBlack), LineWidth(2), Name("All"));
+    // pdf_all.plotOn(frame9, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
+    // pdf_all.plotOn(frame9, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
+    // pdf_all.plotOn(frame9, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
+    // pdf_all.plotOn(frame9, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
+    // pdf_all.plotOn(frame9, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
+    // pdf_all.plotOn(frame9, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
+    // pdf_all.plotOn(frame9, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
+    // TLegend *legend9 = new TLegend(.65, .60, .85, .85);
+    // legend9->AddEntry(frame9->findObject("Data"), "RunII 2018", "L");
+    // legend9->AddEntry(frame9->findObject("All"), "Total p.d.f.", "L");
+    // legend9->AddEntry(frame9->findObject("P_P"), "prompt, prompt", "L");
+    // legend9->AddEntry(frame9->findObject("P_NP"), "prompt, non-prompt", "L");
+    // legend9->AddEntry(frame9->findObject("NP_P"), "non-prompt, prompt", "L");
+    // legend9->AddEntry(frame9->findObject("NP_NP"), "non-prompt, non-prompt", "L");
+    // legend9->AddEntry(frame9->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
+    // legend9->AddEntry(frame9->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
+    // legend9->AddEntry(frame9->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
+    // frame9->SetAxisRange(1, 5e3, "Y");
+    // gPad->SetLogy();
+    // frame9->Draw();
+    // legend9->DrawClone();
+    // // canvas9->SaveAs("fits/4D_JpsiCtau.pdf");
+    // canvas9->SaveAs("fits/4D_JpsiCtau1.png");
+    // TCanvas *canvas0 = new TCanvas("canvas0", "canvas0", 1500, 1000);
+    // RooPlot *frame0 = Jpsi_ctau2.frame(RooFit::Title("Jpsi-2 Ctau 4D"), Bins(BinNum));
+    // data->plotOn(frame0, DataError(RooAbsData::SumW2), Name("Data"));
+    // pdf_all.plotOn(frame0, LineColor(kBlack), LineWidth(2), Name("All"));
+    // pdf_all.plotOn(frame0, Components(pdf_P_P), LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"));
+    // pdf_all.plotOn(frame0, Components(pdf_P_NP), LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"));
+    // pdf_all.plotOn(frame0, Components(pdf_NP_P), LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"));
+    // pdf_all.plotOn(frame0, Components(pdf_NP_NP), LineColor(kBlue), LineStyle(kDashDotted), LineWidth(2), Name("NP_NP"));
+    // pdf_all.plotOn(frame0, Components(pdf_Sig_Comb), LineColor(kRed), LineWidth(1), Name("Sig_Comb"));
+    // pdf_all.plotOn(frame0, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
+    // pdf_all.plotOn(frame0, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
+    // TLegend *legend0 = new TLegend(.65, .60, .85, .85);
+    // legend0->AddEntry(frame0->findObject("Data"), "RunII 2018", "L");
+    // legend0->AddEntry(frame0->findObject("All"), "Total p.d.f.", "L");
+    // legend0->AddEntry(frame0->findObject("P_P"), "prompt, prompt", "L");
+    // legend0->AddEntry(frame0->findObject("P_NP"), "prompt, non-prompt", "L");
+    // legend0->AddEntry(frame0->findObject("NP_P"), "non-prompt, prompt", "L");
+    // legend0->AddEntry(frame0->findObject("NP_NP"), "non-prompt, non-prompt", "L");
+    // legend0->AddEntry(frame0->findObject("Sig_Comb"), "J/#psi, #mu^{+}#mu^{-}", "L");
+    // legend0->AddEntry(frame0->findObject("Comb_Sig"), "#mu^{+}#mu^{-}, J/#psi", "L");
+    // legend0->AddEntry(frame0->findObject("Comb_Comb"), "#mu^{+}#mu^{-}, #mu^{+}#mu^{-}", "L");
+    // frame0->SetAxisRange(1, 5e3, "Y");
+    // gPad->SetLogy();
+    // frame0->Draw();
+    // legend0->DrawClone();
+    // // canvas0->SaveAs("fits/4D_psi2SCtau.pdf");
+    // canvas0->SaveAs("fits/4D_JpsiCtau2.png");
     pdf_all.getVariables()->Print("v");
-    cout<<"Status: "<<res->status()<<endl;
+    cout<<"Status: "<<res->status()<<endl<<"log(L): "<<setprecision(13)<<res->minNll()<<endl;
     return;
 }

@@ -4,9 +4,9 @@
 #include "TChain.h"
 #include "TTree.h"
 using namespace std;
+#define PI 3.14159265359
 
 void loadFile(vector<string>& filenames) {
-    // Combined DPS samples (leyao _1..15 + chensh _16..65 renamed for naming unification), flat in DPS_ntuple
     string prefix = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/DPS_ntuple/Ntuple_2016_DPS_";
     for(int i = 1; i <= 65; i++) filenames.push_back(prefix + to_string(i) + ".root");
 }
@@ -75,17 +75,46 @@ void count() {
         cout<<". Done!"<<'\n';
     }
     loadEff();
-    // loop on tree entries
+    // Define sub-regions
+    int nVars = 5, nBins[] = {6, 6, 5, 9, 7};
+    double *vars = new double[nVars];
+    string varNames[] = {"delta_y", "delta_phi", "evt_y", "evt_pt", "evt_mass"};
+    vector<double> varBins[] = {
+        {0, 0.5, 1, 1.5, 2, 2.5, 4},
+        // {0, 0.3927, 0.7854, 1.1781, 1.5708, 1.9635, 2.3562, 2.7489, 3.1416},
+        {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},// delta_phi alternative
+        {0, 0.4, 0.8, 1.2, 1.6, 2},
+        {0, 5, 10, 15, 20, 25, 30, 35, 40, 80},
+        {7.5, 17.5, 27.5, 37.5, 47.5, 57.5, 67.5, 107.5}
+    };
+    double **nCount = new double*[nVars], **nWeight = new double*[nVars];
+    for(int i = 0; i < nVars; i++) {
+        nCount[i] = new double[nBins[i]];
+        nWeight[i] = new double[nBins[i]];
+        for(int j = 0; j < nBins[i]; j++) {
+            nCount[i][j] = 0;
+            nWeight[i][j] = 0;
+        }
+    }
+    // Loop on tree entries
     UChar_t GEevt_valid = 0, GEevt_passAcc = 0;
-    Double_t GEJpsi1_pt = 0, GEJpsi1_y = 0, GEJpsi2_pt = 0, GEJpsi2_y = 0, GEevt_fourMuMass = 0;
+    Double_t GEJpsi1_pt = 0, GEJpsi1_eta = 0, GEJpsi1_phi = 0, GEJpsi1_mass = 0, GEJpsi1_y = 0;
+    Double_t GEJpsi2_pt = 0, GEJpsi2_eta = 0, GEJpsi2_phi = 0, GEJpsi2_mass = 0, GEJpsi2_y = 0;
+    Double_t GEevt_fourMuMass = 0;
     vector<Double_t> *REJpsi_pt = 0, *REJpsi_y = 0;
     vector<int> *REevt_JpsiId1 = 0, *REevt_JpsiId2 = 0;//, *REJpsi_muId1 = 0, *REJpsi_muId2 = 0, *REmu_pvAsc = 0;
     vector<bool> *REevt_passHLT = 0, *REevt_matchTrg = 0, *REevt_samePV = 0;
     ch->SetBranchAddress("GEevt_valid", &GEevt_valid);
     ch->SetBranchAddress("GEevt_passAcc", &GEevt_passAcc);
     ch->SetBranchAddress("GEJpsi1_pt", &GEJpsi1_pt);
+    ch->SetBranchAddress("GEJpsi1_eta", &GEJpsi1_eta);
+    ch->SetBranchAddress("GEJpsi1_phi", &GEJpsi1_phi);
+    ch->SetBranchAddress("GEJpsi1_mass", &GEJpsi1_mass);
     ch->SetBranchAddress("GEJpsi1_y", &GEJpsi1_y);
     ch->SetBranchAddress("GEJpsi2_pt", &GEJpsi2_pt);
+    ch->SetBranchAddress("GEJpsi2_eta", &GEJpsi2_eta);
+    ch->SetBranchAddress("GEJpsi2_phi", &GEJpsi2_phi);
+    ch->SetBranchAddress("GEJpsi2_mass", &GEJpsi2_mass);
     ch->SetBranchAddress("GEJpsi2_y", &GEJpsi2_y);
     ch->SetBranchAddress("GEevt_fourMuMass", &GEevt_fourMuMass);
     ch->SetBranchAddress("REJpsi_pt", &REJpsi_pt);
@@ -105,6 +134,7 @@ void count() {
         if(fabs(GEJpsi1_y) > 2 || fabs(GEJpsi2_y) > 2) continue;
         if(GEevt_fourMuMass < 7.5) continue;
         nPassAcc++;
+        double w = 0;
         for(int j = (int)REevt_matchTrg->size() - 1; j >= 0; j--) {
             if(!REevt_passHLT->at(j)) continue;
             if(!REevt_matchTrg->at(j)) continue;
@@ -112,11 +142,39 @@ void count() {
             int JpsiId1 = REevt_JpsiId1->at(j), JpsiId2 = REevt_JpsiId2->at(j);
             if(REJpsi_pt->at(JpsiId1) > 40 || REJpsi_pt->at(JpsiId1) < 10) continue;
             if(REJpsi_pt->at(JpsiId2) > 40 || REJpsi_pt->at(JpsiId2) < 10) continue;
+            w = calWeight(REJpsi_pt->at(JpsiId1), REJpsi_y->at(JpsiId1), REJpsi_pt->at(JpsiId2), REJpsi_y->at(JpsiId2));
             nMatchTrg++;
-            totWeight += calWeight(REJpsi_pt->at(JpsiId1), REJpsi_y->at(JpsiId1), REJpsi_pt->at(JpsiId2), REJpsi_y->at(JpsiId2));
+            totWeight += w;
             break;
+        }
+        // delta_y
+        vars[0] = fabs(GEJpsi1_y - GEJpsi2_y);
+        // delta_phi
+        vars[1] = PI - fabs(fabs(GEJpsi1_phi - GEJpsi2_phi) - PI);
+        TLorentzVector JpsiLV1, JpsiLV2;
+        JpsiLV1.SetPtEtaPhiM(GEJpsi1_pt, GEJpsi1_eta, GEJpsi1_phi, GEJpsi1_mass);
+        JpsiLV2.SetPtEtaPhiM(GEJpsi2_pt, GEJpsi2_eta, GEJpsi2_phi, GEJpsi2_mass);
+        // evt_y
+        vars[2] = fabs((JpsiLV1 + JpsiLV2).Rapidity());
+        // evt_pt
+        vars[3] = (JpsiLV1 + JpsiLV2).Pt();
+        // evt_mass
+        vars[4] = GEevt_fourMuMass;
+        for(int j = 0; j < nVars; j++) {
+            if(vars[j] < varBins[j][0] || vars[j] >= varBins[j][nBins[j]]) continue;
+            for(int k = 1; k <= nBins[j]; k++) {
+                if(vars[j] >= varBins[j][k]) continue;
+                nCount[j][k-1]++;
+                nWeight[j][k-1] += w;
+                break;
+            }
         }
     }
     cout<<"\nnPassAcc="<<nPassAcc<<"\nnMatchTrg="<<nMatchTrg<<"\ntotWeight="<<totWeight<<endl;
+    for(int i = 0; i < nVars; i++) {
+        cout<<varNames[i]<<": {";
+        for(int j = 0; j < nBins[i]; j++) cout<<(nCount[i][j] - nWeight[i][j]) / nWeight[i][j]<<", ";
+        cout<<'}'<<endl;
+    }
     return;
 }

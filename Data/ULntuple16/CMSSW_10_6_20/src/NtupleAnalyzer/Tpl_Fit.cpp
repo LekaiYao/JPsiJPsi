@@ -36,6 +36,7 @@ void add_latex(TLatex &latex) {
     latex.DrawLatex(0.68, 0.91, "36.31 fb^{-1} (13TeV)");
     return;
 }
+// Plot the result of template fit
 void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dhSPS, RooDataHist *dhDPS, double frac, double n_sps_dps, string xTitle, string yTitle) {
     TCanvas *canvas = new TCanvas("canvas", "canvas", 1500, 1300);
     RooPlot *frame = var.frame(), *frame_pull = var.frame(RooFit::Title("Pull"));
@@ -81,6 +82,24 @@ void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dh
     l->SetLineStyle(kDashed);
     l->Draw("same");
     canvas->SaveAs(("fig/temp/Template_" + varName + ".png").c_str());
+}
+// Plot the shape of templates
+void plot_T(string varName, RooRealVar &var, RooDataHist *dhSPS, RooDataHist *dhDPS, string xTitle) {
+    TCanvas *canvas = new TCanvas("canvas", "canvas", 1200, 1000);
+    RooPlot *frame = var.frame();
+    RooHistFunc func_SPS("func_SPS", "func_SPS", var, *dhSPS), func_DPS("func_DPS", "func_DPS", var, *dhDPS);
+    func_SPS.plotOn(frame, Normalization(1), LineColor(kRed), LineStyle(kDashed), LineWidth(2), Name("SPS"));
+    func_DPS.plotOn(frame, Normalization(1), LineColor(40), DrawOption("F"), FillColor(40), MoveToBack(), Name("DPS"));
+    TLegend *legend = new TLegend(.55, .70, .75, .85);
+    legend->AddEntry(frame->findObject("SPS"), "SPS", "L");
+    legend->AddEntry(frame->findObject("DPS"), "DPS", "F");
+    frame->SetTitle("");
+    frame->SetYTitle("Normalized events");
+    frame->SetXTitle(xTitle.c_str());
+    frame->Draw();
+    legend->DrawClone();
+    canvas->SaveAs(("fig/temp/T_" + varName + ".png").c_str());
+    return;
 }
 
 void Tpl_Fit() {
@@ -143,7 +162,7 @@ void Tpl_Fit() {
         {0.0281, 0.0300, 0.0190, 0.0305, 0.0169, 0.0311, 0.0137, 0.0161, 0.0205}
     };
     // Specify which variables participate in simultaneous fit
-    const bool simul[] = {true, true, true, true, false};
+    const bool simul[] = {true, false, false, true, false};
     // Store results of f_SPS
     double *fSPS = new double[varNum];
     // Read SPS and DPS data for later use
@@ -206,6 +225,9 @@ void Tpl_Fit() {
         // Fit and plot
         pdf_all.fitTo(*(dh[i]));
         string xTitle = varLatx[i]+(varUnit[i].length() ? ("("+varUnit[i]+")") : ""), yTitle = "d#sigma/d"+varLatx[i]+" ("+(varUnit[i].length() ? ("pb/"+varUnit[i]) : "pb")+")";
+        //// Template
+        plot_T(varName[i], *(var[i]), dhSPS[i], dhDPS[i], xTitle);
+        //// Fitting results
         plot_temp(varName[i], *(var[i]), dh[i], dhSPS[i], dhDPS[i], frac.getVal(), n_sps_dps.getVal(), xTitle, yTitle);
         pdf_all.getVariables()->Print("v");
         fSPS[i] = 1.0 / (1.0 + (1.0 / frac.getVal() - 1.0) / (nSPSEvt / hSPS[i]->GetEntries()) * (nDPSEvt / hDPS[i]->GetEntries()));
