@@ -1,8 +1,7 @@
 .PHONY: all DY DPhi Minv SY SPt Tpl clean
 
 DY_LIST := delta_y-0-0.5 delta_y-0.5-1 delta_y-1-1.5 delta_y-1.5-2 delta_y-2-2.5 delta_y-2.5-4
-# DPhi_LIST := delta_phi-0-0.3927 delta_phi-0.3927-0.7854 delta_phi-0.7854-1.1781 delta_phi-1.1781-1.5708 delta_phi-1.5708-1.9635 delta_phi-1.9635-2.3562 delta_phi-2.3562-2.7489 delta_phi-2.7489-3.1416
-DPhi_LIST := delta_phi-0-0.5 delta_phi-0.5-1 delta_phi-1-1.5 delta_phi-1.5-2 delta_phi-2-2.5 delta_phi-2.5-3
+DPhi_LIST := delta_phi-0-0.3927 delta_phi-0.3927-0.7854 delta_phi-0.7854-1.1781 delta_phi-1.1781-1.5708 delta_phi-1.5708-1.9635 delta_phi-1.9635-2.3562 delta_phi-2.3562-2.7489 delta_phi-2.7489-3.1416
 Minv_LIST := evt_mass-7.5-17.5 evt_mass-17.5-27.5 evt_mass-27.5-37.5 evt_mass-37.5-47.5 evt_mass-47.5-57.5 evt_mass-57.5-67.5 evt_mass-67.5-107.5
 # Minv_LIST := evt_mass-7.5-15.5 evt_mass-15.5-23.5 evt_mass-23.5-31.5 evt_mass-31.5-39.5 evt_mass-39.5-47.5 evt_mass-47.5-57.5 evt_mass-57.5-67.5 evt_mass-67.5-107.5
 SY_LIST := evt_y-0-0.4 evt_y-0.4-0.8 evt_y-0.8-1.2 evt_y-1.2-1.6 evt_y-1.6-2.0 
