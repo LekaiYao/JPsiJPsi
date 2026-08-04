@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include "TFile.h"
@@ -100,7 +101,7 @@ void efficiencyPlot() {
         // if(!GEevt_valid) continue;
         // if(fabs(GEmu_eta->at(0)) > 2.4 || fabs(GEmu_eta->at(1)) > 2.4 || fabs(GEmu_eta->at(2)) > 2.4 || fabs(GEmu_eta->at(3)) > 2.4) continue;
         // if(GEmu_pt->at(0) < 2 || GEmu_pt->at(1) < 2 || GEmu_pt->at(2) < 2 || GEmu_pt->at(3) < 2) continue;
-        if(GEJpsi1_pt < ptBin[0] || GEJpsi1_pt > ptBin[nPtBin - 1] || GEJpsi2_pt < ptBin[0] || GEJpsi2_pt > ptBin[nPtBin - 1]) continue;
+        if(GEJpsi1_pt < ptBin[0] || GEJpsi1_pt >= ptBin[nPtBin] || GEJpsi2_pt < ptBin[0] || GEJpsi2_pt >= ptBin[nPtBin]) continue;
         if(fabs(GEJpsi1_y) > yBin[nYBin] || fabs(GEJpsi2_y) > yBin[nYBin]) continue;
         if(GEevt_fourMuMass < 7.5) continue;
         // Locate the event on the map

@@ -57,6 +57,12 @@ crab_projects/
 # Local update scan workspace (never push)
 update/
 
+# Local analysis notes, validation workspaces, and Codex session state
+.codex/
+comments/
+docs/
+tests/
+
 #md
 *.md
 !README.md

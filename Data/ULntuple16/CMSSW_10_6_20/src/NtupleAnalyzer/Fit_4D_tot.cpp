@@ -1,7 +1,7 @@
 #include "Plot_4D.hpp"
-// #define RefRun// Switch between nominal model and reference model
+#include "TSystem.h"
 
-void Fit_4D_tot() {
+void Fit_4D_tot(bool isRef=false) {
     // Define variables and read input file
     RooRealVar Jpsi_mass1("Jpsi_mass1", "Jpsi_mass1", 2.95, 3.25);
     RooRealVar Jpsi_mass2("Jpsi_mass2", "Jpsi_mass2", 2.95, 3.25);
@@ -28,17 +28,14 @@ void Fit_4D_tot() {
     RooRealVar Jpsi_ratio("Jpsi_ratio", "Jpsi_ratio", 0.6, 0, 1);
     RooGaussian Jpsi_gaussian_1("Jpsi_gaussian_1", "Jpsi_gaussian_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia2);
     RooGaussian Jpsi_gaussian_2("Jpsi_gaussian_2", "Jpsi_gaussian_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia2);
-    #ifndef RefRun
     RooCBShape Jpsi_crysBall_1("Jpsi_crysBall_1", "Jpsi_crysBall_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1, Jpsi_alpha1, Jpsi_nx1);
     RooCBShape Jpsi_crysBall_2("Jpsi_crysBall_2", "Jpsi_crysBall_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia1, Jpsi_alpha1, Jpsi_nx1);
-    RooAddPdf JpsiMassSig1("JpsiMassSig1", "JpsiMassSig1", RooArgList(Jpsi_crysBall_1, Jpsi_gaussian_1), Jpsi_ratio);
-    RooAddPdf JpsiMassSig2("JpsiMassSig2", "JpsiMassSig2", RooArgList(Jpsi_crysBall_2, Jpsi_gaussian_2), Jpsi_ratio);
-    #else
     RooGaussian Jpsi_gaussRef_1("Jpsi_gaussRef_1", "Jpsi_gaussRef_1", Jpsi_mass1, Jpsi_mean, Jpsi_devia1);
     RooGaussian Jpsi_gaussRef_2("Jpsi_gaussRef_2", "Jpsi_gaussRef_2", Jpsi_mass2, Jpsi_mean, Jpsi_devia1);
-    RooAddPdf JpsiMassSig1("JpsiMassSig1", "JpsiMassSig1", RooArgList(Jpsi_gaussRef_1, Jpsi_gaussian_1), Jpsi_ratio);
-    RooAddPdf JpsiMassSig2("JpsiMassSig2", "JpsiMassSig2", RooArgList(Jpsi_gaussRef_2, Jpsi_gaussian_2), Jpsi_ratio);
-    #endif
+    RooAbsPdf &Jpsi_core_1 = isRef ? static_cast<RooAbsPdf &>(Jpsi_gaussRef_1) : static_cast<RooAbsPdf &>(Jpsi_crysBall_1);
+    RooAbsPdf &Jpsi_core_2 = isRef ? static_cast<RooAbsPdf &>(Jpsi_gaussRef_2) : static_cast<RooAbsPdf &>(Jpsi_crysBall_2);
+    RooAddPdf JpsiMassSig1("JpsiMassSig1", "JpsiMassSig1", RooArgList(Jpsi_core_1, Jpsi_gaussian_1), Jpsi_ratio);
+    RooAddPdf JpsiMassSig2("JpsiMassSig2", "JpsiMassSig2", RooArgList(Jpsi_core_2, Jpsi_gaussian_2), Jpsi_ratio);
     // Background p.d.f.
     RooChebychev JpsiMassComb1("JpsiMassComb1", "JpsiMassComb1", Jpsi_mass1, RooArgList());
     RooChebychev JpsiMassComb2("JpsiMassComb2", "JpsiMassComb2", Jpsi_mass2, RooArgList());
@@ -102,14 +99,25 @@ void Fit_4D_tot() {
         RooArgList(pdf_P_P, pdf_P_NP, pdf_NP_P, pdf_NP_NP, pdf_Sig_Comb, pdf_Comb_Sig, pdf_Comb_Comb),
         RooArgList(n_P_P, n_P_NP, n_P_NP, n_NP_NP, n_Sig_Comb, n_Sig_Comb, n_Comb_Comb)
     );
-    RooFitResult *res;
-    while(true) {
+    RooFitResult *res = 0;
+    // The nominal CB+Gaussian model can be sensitive to the current starting
+    // values and parameter ranges.  Bound the retries so a non-convergent
+    // configuration fails explicitly instead of looping forever.
+    const int maxFitAttempts = 50;
+    for(int attempt = 0; attempt < maxFitAttempts; ++attempt) {
+        delete res;
         res = pdf_all.fitTo(*data->reduce(RooArgSet(Jpsi_mass1, Jpsi_mass2, Jpsi_ctau1, Jpsi_ctau2)), Save());
-        if(!res->status() && res->edm()<0.01) break;
+        if(res && !res->status() && res->edm()<0.01) break;
+    }
+    if(!res || res->status() || res->edm()>=0.01) {
+        cerr << "Total 4D fit failed after " << maxFitAttempts << " attempts" << endl;
+        delete res;
+        return;
     }
 
     // Draw data point and p.d.f. curve
-    string prefix = "fig/";
+    string prefix = isRef ? "fig/ref/" : "fig/";
+    gSystem->mkdir(prefix.c_str(), kTRUE);
     Plot_4D(data, pdf_all, pdf_P_P, pdf_P_NP, pdf_NP_P, pdf_NP_NP, pdf_Sig_Comb, pdf_Comb_Sig, pdf_Comb_Comb,
         prefix, Jpsi_mass1, Jpsi_mass2, Jpsi_ctau1, Jpsi_ctau2, "", "pdf");
     pdf_all.getVariables()->Print("v");
@@ -118,10 +126,8 @@ void Fit_4D_tot() {
     Jpsi_mean.setConstant(kTRUE);
     Jpsi_devia1.setConstant(kTRUE);
     Jpsi_devia2.setConstant(kTRUE);
-    #ifndef RefRun
     Jpsi_alpha1.setConstant(kTRUE);
     Jpsi_nx1.setConstant(kTRUE);
-    #endif
     Jpsi_ratio.setConstant(kTRUE);
 
     Jpsi_mu1.setConstant(kTRUE);
@@ -136,13 +142,10 @@ void Fit_4D_tot() {
 
     RooWorkspace *wsp = new RooWorkspace("wsp", "wsp");
     wsp->import(pdf_all);
-    #ifndef RefRun
-    wsp->writeToFile("Model_4D_tot.root");
-    #else
-    wsp->writeToFile("Model_4D_tot_ref.root");
-    #endif
+    wsp->writeToFile(isRef ? "Model_4D_tot_ref.root" : "Model_4D_tot.root");
     // Log message to screen
     cout<<"Status: "<<res->status()<<endl;
     cout<<"Event yield: "<<n_P_P.getVal()<<" +/- "<<n_P_P.getError()<<endl;
+    delete res;
     return;
 }

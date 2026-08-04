@@ -7,8 +7,11 @@ Minv_LIST := evt_mass-7.5-17.5 evt_mass-17.5-27.5 evt_mass-27.5-37.5 evt_mass-37
 SY_LIST := evt_y-0-0.4 evt_y-0.4-0.8 evt_y-0.8-1.2 evt_y-1.2-1.6 evt_y-1.6-2.0 
 SPt_LIST := evt_pt-0-5 evt_pt-5-10 evt_pt-10-15 evt_pt-15-20 evt_pt-20-25 evt_pt-25-30 evt_pt-30-35 evt_pt-35-40 evt_pt-40-80
 
-Model_4D_tot.root Model_4D_tot_ref.root: WeightData.root
-	@root -l -q -b Fit_4D_tot.cpp > /dev/null
+Model_4D_tot.root: WeightData.root Fit_4D_tot.cpp Plot_4D.hpp
+	@root -l -q -b 'Fit_4D_tot.cpp(false)' > /dev/null
+
+Model_4D_tot_ref.root: WeightData.root Fit_4D_tot.cpp Plot_4D.hpp
+	@root -l -q -b 'Fit_4D_tot.cpp(true)' > /dev/null
 
 $(DY_LIST) $(DPhi_LIST) $(Minv_LIST) $(SY_LIST) $(SPt_LIST): Model_4D_tot.root Model_4D_tot_ref.root
 	$(eval PARTS := $(subst -, ,$@))

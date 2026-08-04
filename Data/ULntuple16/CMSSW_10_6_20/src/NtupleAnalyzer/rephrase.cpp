@@ -35,11 +35,13 @@ using namespace std;
 // int suffix[N_DIR] = {10};
 // string outFile = "WeightSPS_pythia.root";
 // SPS star
+#ifndef REPHRASE_IO_CONFIGURED
 #define N_DIR 1
 string prefix[N_DIR] = {""};
 string infix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/Ntuple_2016_SPSstar";
 int suffix[N_DIR] = {1};
 string outFile = "WeightSPSstar.root";
+#endif
 // NLO (upstream chensh HELAC-Onia samples; commented option)
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
