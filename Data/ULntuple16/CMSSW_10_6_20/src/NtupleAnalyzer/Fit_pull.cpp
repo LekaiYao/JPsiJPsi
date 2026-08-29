@@ -64,7 +64,7 @@ void Fit_pull() {
     data->plotOn(f, DataError(RooAbsData::SumW2), Name("Data"));//
     pdf.plotOn(f, LineColor(kBlue), LineWidth(2), Name("GS"));
     TLegend *l = new TLegend(.65, .60, .85, .85);
-    l->AddEntry(f->findObject("Data"), "N_{corr} Pull", "L");
+    l->AddEntry(f->findObject("Data"), "N_{corr} Pull", "LEP");
     l->AddEntry(f->findObject("GS"), "Gaussian", "L");
     f->Draw();
     l->DrawClone();
