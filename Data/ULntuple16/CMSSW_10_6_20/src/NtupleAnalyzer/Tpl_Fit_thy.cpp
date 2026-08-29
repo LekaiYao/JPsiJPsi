@@ -21,6 +21,9 @@ using namespace RooFit;
 constexpr long double operator"" _PI(long double f) {
     return 3.14159265359 * f;
 }
+constexpr long double operator"" _PQUA(long double f) {// To compensate for contribution of psi(2S) in cross section
+    return 4.0 / 3.0 * f;
+}
 double combError(double sys1, double sys2, double sys3, double sys4, double sys5) {
     return sqrt(sys1 * sys1 + sys2 * sys2 + sys3 * sys3 + sys4 * sys4 + sys5 * sys5);
 }
@@ -52,7 +55,6 @@ void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dh
     func_SPS.plotOn(frame, Normalization(coef_SPS.getVal()), LineColor(kRed), LineStyle(kDashed), LineWidth(4), Name("SPS"));
     func_SPS.plotOn(frame, Normalization(coef_SPS.getVal() * 1.41), LineColor(kBlue), LineStyle(kDashed), LineWidth(4), Name("SPS+"));
     func_SPS.plotOn(frame, Normalization(coef_SPS.getVal() * 0.82), LineColor(kMagenta), LineStyle(kDashed), LineWidth(4), Name("SPS-"));
-    RooHist* pull = frame->pullHist("Data", "All");
     TLegend *legend = new TLegend(.55, .60, .85, .85);
     legend->AddEntry(frame->findObject("Data"), "RunII 2016", "L");
     // legend->AddEntry(frame->findObject("All"), "Total p.d.f.", "L");
@@ -75,25 +77,28 @@ void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dh
 
 void Tpl_Fit_thy() {
     // Names of kinematic variables
-    const int varNum = 2;
-    const string varName[] = {"delta_y", "delta_phi"};
-    const string varLatx[] = {"|#Delta y(J/#psi_{1},J/#psi_{2})|", "|#Delta#phi(J/#psi_{1},J/#psi_{2})|"};
-    const string varUnit[] = {"", ""};
+    const int varNum = 3;
+    const string varName[] = {"delta_y", "delta_phi", "evt_pt"};
+    const string varLatx[] = {"|#Delta y(J/#psi_{1},J/#psi_{2})|", "|#Delta#phi(J/#psi_{1},J/#psi_{2})|", "p_{T}(J/#psi_{1},J/#psi_{2})"};
+    const string varUnit[] = {"", "", "GeV"};
     // Binning configurations
-    const int binNum[] = {6, 6};
+    const int binNum[] = {6, 6, 9};
     const vector<vector<double>> bins = {
         {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 4.0},
         {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0},
+        {0, 5, 10, 15, 20, 25, 30, 35, 40, 80}
     };
     // Differential cross sections(event yield)
     vector<vector<double>> xSec = {
         {2585.85, 848.6, 514.317, 390.036, 264.352, 207.22},
         {1603.09, 646.887, 302.983, 362.62, 563.976, 882.638},
+        {654.707, 663.187, 537.083, 327.398, 1140.69, 782.025, 260.75, 233.562, 248.597}
     };
     // Statistical uncertainties(error of event yield)
     vector<vector<double>> sta = {
         {54.3052, 32.3728, 25.6471, 22.7905, 18.318, 16.6171},
         {42.1743, 27.3204, 19.1803, 21.0966, 25.9222, 34.0112},
+        {28.1011, 29.4673, 25.7194, 20.2752, 35.8797, 30.6585, 17.2883, 16.1139, 16.7508}
     };
     for(int i = 0; i < varNum; i++) {
         for(int j = 0; j < binNum[i]; j++) {
@@ -108,31 +113,36 @@ void Tpl_Fit_thy() {
     const vector<vector<double>> sys3 = {
         {0.1052, 0.1094, 0.1328, 0.1506, 0.1709, 0.1126},
         {0.0754, 0.0534, 0.0668, 0.1883, 0.1128, 0.1063},
+        {0.0905, 0.1029, 0.1098, 0.1564, 0.0721, 0.1291, 0.1244, 0.1684, 0.3094}
     }, sys4 = {
         {0.0156, 0.0382, 0.0234, 0.0361, 0.0461, 0.0377},
         {0.0160, 0.0215, 0.0338, 0.0339, 0.0080, 0.0422},
+        {0.0281, 0.0300, 0.0190, 0.0305, 0.0169, 0.0311, 0.0137, 0.0161, 0.0205}
     };
     // Theoretical predictions
     //// Central value (not used!)
     vector<vector<double>> predMid = {
         {139.735, 24.8229, 3.59431, 0.831184, 0.246979, 0.055994},//0.105625, 0.048838, 0.0135205},
         {36.1687, 11.3241, 2.71414, 1.3498, 1.11811, 1.48746},
+        {0, 1.16153_PQUA, 0.47954_PQUA, 0.527015_PQUA, 2.00638_PQUA, 1.53216_PQUA, 0.843375_PQUA, 0.456547_PQUA, 0.0669153_PQUA}// The first bin is meant to be empty
     };
     //// Lower limit
     vector<vector<double>> predLow = {
         {88.8285, 14.7747, 1.89624, 0.382532, 0.105109, 0.022624},//0.0427407, 0.0198011, 0.00533146},
         {23.1626, 7.03733, 1.61862, 0.766264, 0.577607, 0.643568},
+        {0, 0.639751_PQUA, 0.259652_PQUA, 0.281785_PQUA, 1.06680_PQUA, 0.814610_PQUA, 0.447775_PQUA, 0.242967_PQUA, 0.0357267_PQUA}
     };
     //// Upper limit
     vector<vector<double>> predUp = {
         {225.85, 42.2799, 7.03847, 1.85164, 0.600244, 0.13948},//0.2615, 0.122751, 0.0342023},
         {56.3082, 18.5907, 4.51577, 2.36708, 2.12218, 3.52344},
+        {0, 2.23904_PQUA, 0.937985_PQUA, 1.04776_PQUA, 4.02691_PQUA, 3.08767_PQUA, 1.69746_PQUA, 0.921373_PQUA, 0.134505_PQUA}
     };
     // Store event yields
     double frac = 0.660;
-    vector<double> yVar = {93.0, 74.4};
+    vector<double> yVar = {93.0, 74.4, 7.44};
     // Set plotting limit mannually
-    vector<double> yMax = {1000, 1000}, yMin = {0.01, 0.1};
+    vector<double> yMax = {1000, 1000, 10}, yMin = {0.01, 0.1, 0.01};
     // Read SPS and DPS data for later use
     TFile spsFile("WeightNLO.root", "READ"), dpsFile("UnweightDPS.root", "READ");
     TTree *spsTree = (TTree *)spsFile.Get("data"), *dpsTree = (TTree *)dpsFile.Get("data");
@@ -149,7 +159,8 @@ void Tpl_Fit_thy() {
         h[i] = new TH1D(("h_" + varName[i]).c_str(), ("h_" + varName[i]).c_str(), binNum[i], bins[i].data());
         for(int j = 0; j < binNum[i]; j++) {
             h[i]->Fill(bins[i][j] + 0.01, xSec[i][j]);
-            h[i]->SetBinError(j + 1, sta[i][j] + xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j], sys5));
+            double sysErr = xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j], sys5);
+            h[i]->SetBinError(j + 1, sqrt(sta[i][j] * sta[i][j] + sysErr * sysErr));
         }
         var[i] = new RooRealVar(varName[i].c_str(), varName[i].c_str(), bins[i][0], bins[i][binNum[i]]);
         dh[i] = new RooDataHist(("dh_" + varName[i]).c_str(), ("dh_" + varName[i]).c_str(), *(var[i]), h[i]);

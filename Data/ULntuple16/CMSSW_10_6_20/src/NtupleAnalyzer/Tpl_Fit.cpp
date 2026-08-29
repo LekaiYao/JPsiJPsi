@@ -181,7 +181,8 @@ void Tpl_Fit() {
         h[i] = new TH1D(("h_" + varName[i]).c_str(), ("h_" + varName[i]).c_str(), binNum[i], bins[i].data());
         for(int j = 0; j < binNum[i]; j++) {
             h[i]->Fill(bins[i][j] + 0.01, xSec[i][j]);
-            h[i]->SetBinError(j + 1, sta[i][j] + xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j], sys5));
+            double sysErr = xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j], sys5);
+            h[i]->SetBinError(j + 1, sqrt(sta[i][j] * sta[i][j] + sysErr * sysErr));
         }
         var[i] = new RooRealVar(varName[i].c_str(), varName[i].c_str(), bins[i][0], bins[i][binNum[i]]);
         dh[i] = new RooDataHist(("dh_" + varName[i]).c_str(), ("dh_" + varName[i]).c_str(), *(var[i]), h[i]);
@@ -239,7 +240,8 @@ void Tpl_Fit() {
             h1->Fill(bins[i][j] + 0.01, xSec[i][j]);
             h1->SetBinError(j + 1, sta[i][j]);
             h2->Fill(bins[i][j] + 0.01, xSec[i][j]);
-            h2->SetBinError(j + 1, sta[i][j] + xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j], sys5));
+            double sysErr = xSec[i][j] * combError(sys1, sys2, sys3[i][j], sys4[i][j], sys5);
+            h2->SetBinError(j + 1, sqrt(sta[i][j] * sta[i][j] + sysErr * sysErr));
         }
         TCanvas *canvas2 = new TCanvas("canvas2", "canvas2", 1000, 1000);
         gPad->SetLeftMargin(0.15);
