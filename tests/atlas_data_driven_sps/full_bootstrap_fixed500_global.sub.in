@@ -1,0 +1,13 @@
+universe = vanilla
+executable = @EXECUTABLE@
+arguments = $(ProcId) @BASE_SEED@ @EOS_OUTPUT_ROOT@ 5 5 nominal12_mergeddy 10 global_calibrated
+output = @LOG_DIR@/job.$(ClusterId).$(ProcId).out
+error = @LOG_DIR@/job.$(ClusterId).$(ProcId).err
+log = @LOG_DIR@/job.$(ClusterId).$(ProcId).log
+request_cpus = 1
+request_memory = 4000
+request_disk = 2000000
++MaxRuntime = 3600
+should_transfer_files = NO
+environment = "PATH=/cvmfs/cms.cern.ch/common:/usr/local/bin:/usr/bin:/bin"
+queue 100
