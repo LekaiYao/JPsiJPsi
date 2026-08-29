@@ -1,10 +1,18 @@
 #include <iostream>
 #include <fstream>
+#include <utility>
 #include "TFile.h"
 #include "TChain.h"
 #include "TTree.h"
+#include "TLorentzVector.h"
 using namespace std;
 #define PI 3.14159265359
+
+struct MixedJpsi {
+    Double_t pt, eta, phi, mass, y, weight;
+    Long64_t sourceEvent;
+    bool passAcc;
+};
 
 void loadFile(vector<string>& filenames) {
     // GEN-only Pythia8 DPS samples (chensh open path; local direct/ is empty, read upstream directly)
@@ -96,8 +104,9 @@ void count() {
         }
     }
     // Loop on tree entries
-    vector<Double_t> *Jpsi_pt = 0, *Jpsi_eta = 0, *Jpsi_phi = 0, *Jpsi_mass = 0, *Jpsi_y = 0, *evt_mass = 0;
+    vector<Double_t> *Jpsi_pt = 0, *Jpsi_eta = 0, *Jpsi_phi = 0, *Jpsi_mass = 0, *Jpsi_y = 0;
     vector<vector<Double_t>> *Jpsi_mu_pt = 0, *Jpsi_mu_eta = 0;
+    vector<pair<int, int>> *pairId = 0;
     ch->SetBranchAddress("GENjpsi_pt", &Jpsi_pt);
     ch->SetBranchAddress("GENjpsi_eta", &Jpsi_eta);
     ch->SetBranchAddress("GENjpsi_phi", &Jpsi_phi);
@@ -105,86 +114,102 @@ void count() {
     ch->SetBranchAddress("GENjpsi_y", &Jpsi_y);
     ch->SetBranchAddress("GENjpsi_mu_pt", &Jpsi_mu_pt);
     ch->SetBranchAddress("GENjpsi_mu_eta", &Jpsi_mu_eta);
-    ch->SetBranchAddress("GENevt_mass", &evt_mass);
-    // Unified version
-    Int_t nEntry = ch->GetEntries();
-    vector<Double_t> J_pt, J_eta, J_phi, J_mass, J_y, J_w;
-    vector<bool> J_passAcc;
-    for(int i = 0; i < nEntry; i++) {
+    ch->SetBranchAddress("GEN_pair_id", &pairId);
+
+    // Keep the two slots selected by GEN_pair_id separate.  Their empirical
+    // spectra are not exchangeable, so DPS mixing must preserve one J/psi
+    // from each slot rather than draw twice from a merged pool.
+    Long64_t nEntry = ch->GetEntries();
+    vector<MixedJpsi> pools[2];
+    for(Long64_t i = 0; i < nEntry; i++) {
         ch->GetEntry(i);
-        cout<<"Processing: "<<(i+1)<<"th entry\r";
-        // if(Jpsi_pt->size() < 2) continue;
-        // if(Jpsi_pt->at(0) < 10 || Jpsi_pt->at(0) > 40 || Jpsi_pt->at(1) < 10 || Jpsi_pt->at(1) > 40) continue;
-        // if(fabs(Jpsi_y->at(0)) > 2 || fabs(Jpsi_y->at(1)) > 2) continue;
-        for(int j = 0; j < Jpsi_pt->size() && j < 2; j++) {
+        if(!pairId || pairId->empty()) continue;
+        int selected[] = {pairId->at(0).first, pairId->at(0).second};
+        for(int slot = 0; slot < 2; slot++) {
+            int j = selected[slot];
+            if(j < 0 || j >= (int)Jpsi_pt->size()) continue;
             if(Jpsi_pt->at(j) < 10 || Jpsi_pt->at(j) > 40 || fabs(Jpsi_y->at(j)) > 2) continue;
-            J_pt.push_back(Jpsi_pt->at(j));
-            J_eta.push_back(Jpsi_eta->at(j));
-            J_phi.push_back(Jpsi_phi->at(j));
-            J_mass.push_back(Jpsi_mass->at(j));
-            J_y.push_back(Jpsi_y->at(j));
-            J_w.push_back(calJpsiWeight(Jpsi_pt->at(j), Jpsi_y->at(j)));
-            bool pAc = Jpsi_mu_pt->at(j)[0] > 3.5 && Jpsi_mu_pt->at(j)[1] > 3.5 && fabs(Jpsi_mu_eta->at(j)[0]) < 2.4 && fabs(Jpsi_mu_eta->at(j)[1]) < 2.4;
-            J_passAcc.push_back(pAc);
+            MixedJpsi candidate;
+            candidate.pt = Jpsi_pt->at(j);
+            candidate.eta = Jpsi_eta->at(j);
+            candidate.phi = Jpsi_phi->at(j);
+            candidate.mass = Jpsi_mass->at(j);
+            candidate.y = Jpsi_y->at(j);
+            candidate.weight = calJpsiWeight(candidate.pt, candidate.y);
+            candidate.sourceEvent = i;
+            candidate.passAcc = Jpsi_mu_pt->at(j)[0] > 3.5 && Jpsi_mu_pt->at(j)[1] > 3.5
+                && fabs(Jpsi_mu_eta->at(j)[0]) < 2.4 && fabs(Jpsi_mu_eta->at(j)[1]) < 2.4;
+            pools[slot].push_back(candidate);
         }
     }
-    cout<<endl;
-    Int_t nPool = J_pt.size(), nDraw = 10000, nEvent = 0, nPassAcc = 0;
+
+    Long64_t nEvent = 0, nPassAcc = 0, nTried = 0;
     Double_t totWeight = 0;
-    srand(time(0));
-    delete gRandom;
-    gRandom = new TRandom3(rand());
-    for(int i = 0; i < nDraw; i++) {
-        cout<<"Generating: "<<(i+1)<<"th mixing event\r";
-        int i1 = (int)(gRandom->Rndm() * nPool), i2 = (int)(gRandom->Rndm() * nPool);
-        if(i1 == i2) continue;
-        TLorentzVector JpsiLV1, JpsiLV2;
-        JpsiLV1.SetPtEtaPhiM(J_pt[i1], J_eta[i1], J_phi[i1], J_mass[i1]);
-        JpsiLV2.SetPtEtaPhiM(J_pt[i2], J_eta[i2], J_phi[i2], J_mass[i2]);
-        if((JpsiLV1 + JpsiLV2).M() < 7.5) continue;
-        nEvent++;
-        double w = 0;
-        if(J_passAcc[i1] && J_passAcc[i2]) w = J_w[i1] * J_w[i2];
-        nPassAcc += (int)(w != 0);
-        totWeight += w;
-        // delta_y
-        vars[0] = fabs(J_y[i1] - J_y[i2]);
-        // delta_phi
-        vars[1] = PI - fabs(fabs(J_phi[i1] - J_phi[i2]) - PI);
-        // evt_y
-        vars[2] = fabs((JpsiLV1 + JpsiLV2).Rapidity());
-        // evt_pt
-        vars[3] = (JpsiLV1 + JpsiLV2).Pt();
-        // evt_mass
-        vars[4] = (JpsiLV1 + JpsiLV2).M();
-        for(int j = 0; j < nVars; j++) {
-            if(vars[j] < varBins[j][0] || vars[j] >= varBins[j][nBins[j]]) continue;
-            for(int k = 1; k <= nBins[j]; k++) {
-                if(vars[j] >= varBins[j][k]) continue;
-                nCount[j][k-1]++;
-                nWeight[j][k-1] += w;
-                break;
+    vector<Double_t> removedCount(nEntry, 0), removedWeight(nEntry, 0);
+    for(size_t i1 = 0; i1 < pools[0].size(); i1++) {
+        const MixedJpsi &jpsi1 = pools[0][i1];
+        for(size_t i2 = 0; i2 < pools[1].size(); i2++) {
+            const MixedJpsi &jpsi2 = pools[1][i2];
+            if(jpsi1.sourceEvent == jpsi2.sourceEvent) continue;
+            nTried++;
+            TLorentzVector JpsiLV1, JpsiLV2;
+            JpsiLV1.SetPtEtaPhiM(jpsi1.pt, jpsi1.eta, jpsi1.phi, jpsi1.mass);
+            JpsiLV2.SetPtEtaPhiM(jpsi2.pt, jpsi2.eta, jpsi2.phi, jpsi2.mass);
+            if((JpsiLV1 + JpsiLV2).M() < 7.5) continue;
+            nEvent++;
+            double w = 0;
+            if(jpsi1.passAcc && jpsi2.passAcc) w = jpsi1.weight * jpsi2.weight;
+            nPassAcc += (int)(w != 0);
+            totWeight += w;
+            removedCount[jpsi1.sourceEvent] += 1;
+            removedCount[jpsi2.sourceEvent] += 1;
+            removedWeight[jpsi1.sourceEvent] += w;
+            removedWeight[jpsi2.sourceEvent] += w;
+            // delta_y
+            vars[0] = fabs(jpsi1.y - jpsi2.y);
+            // delta_phi
+            vars[1] = PI - fabs(fabs(jpsi1.phi - jpsi2.phi) - PI);
+            // evt_y
+            vars[2] = fabs((JpsiLV1 + JpsiLV2).Rapidity());
+            // evt_pt
+            vars[3] = (JpsiLV1 + JpsiLV2).Pt();
+            // evt_mass
+            vars[4] = (JpsiLV1 + JpsiLV2).M();
+            for(int j = 0; j < nVars; j++) {
+                if(vars[j] < varBins[j][0] || vars[j] >= varBins[j][nBins[j]]) continue;
+                for(int k = 1; k <= nBins[j]; k++) {
+                    if(vars[j] >= varBins[j][k]) continue;
+                    nCount[j][k-1]++;
+                    nWeight[j][k-1] += w;
+                    break;
+                }
             }
         }
     }
-    cout<<"\nnEvent="<<nEvent<<"\nnPassAcc="<<nPassAcc<<"\ntotWeight="<<totWeight<<endl;
-    // Separated version
-    // Int_t nEntry = ch->GetEntries(), nEvent = 0, nPassAcc = 0;
-    // Double_t totWeight = 0;
-    // for(int i = 0; i < nEntry; i++) {
-    //     ch->GetEntry(i);
-    //     cout<<"Processing: "<<(i+1)<<"th entry\r";
-    //     if(Jpsi_pt->empty()) continue;
-    //     if(Jpsi_pt->at(0) < 10 || Jpsi_pt->at(0) > 40 || Jpsi_pt->at(1) < 10 || Jpsi_pt->at(1) > 40) continue;
-    //     if(fabs(Jpsi_y->at(0)) > 2 || fabs(Jpsi_y->at(1)) > 2) continue;
-    //     if(evt_mass->at(0) < 7.5) continue;
-    //     nEvent++;
-    //     if(Jpsi_mu_pt->at(0)[0] > 3.5 && Jpsi_mu_pt->at(0)[1] > 3.5 && fabs(Jpsi_mu_eta->at(0)[0]) < 2.4 && fabs(Jpsi_mu_eta->at(0)[1]) < 2.4) {
-    //         nPassAcc++;
-    //         totWeight += calWeight_Jpsi(Jpsi_pt->at(0), Jpsi_y->at(0));
-    //     }
-    // }
-    // cout<<"\n[J/psi]\nnEvent="<<nEvent[0]<<"\nnPassAcc="<<nPassAcc[0]<<"\ntotWeight="<<totWeight[0];
+    Double_t closure = (nEvent - totWeight) / totWeight;
+
+    // Delete-one-source-event jackknife.  Mixed pairs are correlated because
+    // each input J/psi is reused, so pair-level Poisson errors are invalid.
+    Double_t jackknifeMean = 0;
+    for(Long64_t i = 0; i < nEntry; i++) {
+        Double_t count_i = nEvent - removedCount[i];
+        Double_t weight_i = totWeight - removedWeight[i];
+        jackknifeMean += (count_i - weight_i) / weight_i;
+    }
+    jackknifeMean /= nEntry;
+    Double_t jackknifeSum = 0;
+    for(Long64_t i = 0; i < nEntry; i++) {
+        Double_t count_i = nEvent - removedCount[i];
+        Double_t weight_i = totWeight - removedWeight[i];
+        Double_t closure_i = (count_i - weight_i) / weight_i;
+        jackknifeSum += (closure_i - jackknifeMean) * (closure_i - jackknifeMean);
+    }
+    Double_t closureStat = sqrt((nEntry - 1.) / nEntry * jackknifeSum);
+
+    cout<<"pool1="<<pools[0].size()<<"\npool2="<<pools[1].size()
+        <<"\nnTried="<<nTried<<"\nnEvent="<<nEvent<<"\nnPassAcc="<<nPassAcc
+        <<"\ntotWeight="<<totWeight<<"\nclosure="<<closure
+        <<"\nclosure_jackknife_stat="<<closureStat<<endl;
     for(int i = 0; i < nVars; i++) {
         cout<<varNames[i]<<": {";
         for(int j = 0; j < nBins[i]; j++) {
