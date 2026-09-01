@@ -5,6 +5,7 @@
 #include "TLegend.h"
 #include "TLatex.h"
 #include "TLine.h"
+#include "RVersion.h"
 #include "RooRealVar.h"
 #include "RooPlot.h"
 #include "RooHist.h"
@@ -30,7 +31,13 @@ void plot_on(
     const RooAbsPdf &pdf_Sig_Comb, const RooAbsPdf &pdf_Comb_Sig, const RooAbsPdf &pdf_Comb_Comb,
     const string proj
 ) {
-    pdf_all.plotOn(frame, LineColor(kBlack), LineWidth(2), Name("All"), Normalization(pdf_all.expectedEvents(RooArgSet()), RooAbsReal::NumEvent), ProjectionRange(proj.c_str()));
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6, 40, 0)
+    RooArgSet normalizationSet;
+    const double expectedEvents = pdf_all.expectedEvents(&normalizationSet);
+#else
+    const double expectedEvents = pdf_all.expectedEvents(RooArgSet());
+#endif
+    pdf_all.plotOn(frame, LineColor(kBlack), LineWidth(2), Name("All"), Normalization(expectedEvents, RooAbsReal::NumEvent), ProjectionRange(proj.c_str()));
     pdf_P_P.plotOn(frame, LineColor(kBlue), LineStyle(kSolid), LineWidth(2), Name("P_P"), Normalization((dynamic_cast<RooRealVar &>(pdf_all.coefList()[0])).getVal(), RooAbsReal::NumEvent), ProjectionRange(proj.c_str()));
     pdf_P_NP.plotOn(frame, LineColor(kBlue), LineStyle(kDashed), LineWidth(2), Name("P_NP"), Normalization((dynamic_cast<RooRealVar &>(pdf_all.coefList()[1])).getVal(), RooAbsReal::NumEvent), ProjectionRange(proj.c_str()));
     pdf_NP_P.plotOn(frame, LineColor(kBlue), LineStyle(kDotted), LineWidth(2), Name("NP_P"), Normalization((dynamic_cast<RooRealVar &>(pdf_all.coefList()[2])).getVal(), RooAbsReal::NumEvent), ProjectionRange(proj.c_str()));
