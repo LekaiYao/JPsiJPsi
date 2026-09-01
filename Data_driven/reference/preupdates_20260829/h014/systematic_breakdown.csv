@@ -1,0 +1,19 @@
+group,variation,f_dps,signed_shift,up,down,mapping,included,review,wording,caveat
+single_j_category,pt15,0.171201624240,+0.000778391595,0.000778391595,0.006246760932,asymmetric group envelope including absy1p2,yes,user-approved,single-J category/model dependence,base PDF functional forms fixed
+single_j_category,absy1p2,0.164176471713,-0.006246760932,,,member of category envelope,yes,user-approved,single-J category/model dependence,historical category nominal now variation
+CR_definition_and_purity,nominal_purity,0.166173698866,-0.004249533779,0.007830845807,0.006494652437,envelope over boundary and zero/MC leakage variants,yes,user-approved,control-region definition and purity,nominal central itself uses zero SPS leakage
+CR_definition_and_purity,phi70_zero,0.178254078452,+0.007830845807,,,member of CR envelope,yes,user-approved,CR boundary,
+CR_definition_and_purity,phi70_purity,0.175261590110,+0.004838357465,,,member of CR envelope,yes,user-approved,CR boundary plus MC SPS leakage,
+CR_definition_and_purity,phi110_zero,0.171777926966,+0.001354694321,,,member of CR envelope,yes,user-approved,CR boundary,
+CR_definition_and_purity,phi110_purity,0.163928580208,-0.006494652437,,,member of CR envelope,yes,user-approved,CR boundary plus MC SPS leakage,
+CR_definition_and_purity,dy2p4_zero_or_purity,0.170417031446,-0.000006201199,,,member of CR envelope,yes,user-approved,CR dy boundary,MC leakage is zero for this boundary
+DPS_MC_full_workflow_closure,pure_DPS_pseudodata,1.037868194160,+0.037868194160 relative to unity,0.00645362006318,0.00645362006318,abs(relative closure bias)*nominal f_DPS; symmetric,yes,user-approved,pure-DPS MC full-workflow closure,conditional on current DPS MC being treated as correct
+projection,four_1D_template_fits,0.171938907014;0.171264157937;0.163516517955;0.170609440418,+0.001515674369;+0.000840925292;-0.006906714690;+0.000186207773,,,none,no,user-approved cross-check,formal projection cross-check,not an independent systematic
+2D_binning,backup_geometries,,,,,none,no,backup,binning diagnostic,not re-evaluated as a formal global-nominal systematic
+acceptance_efficiency_correction,per-bin alternatives,,,,,none,deferred,deferred/backup,not evaluated in current f_DPS budget,nominal correction is applied; variations are not zero
+single_j_functional_form,alternative base PDFs/fixed-shape uncertainty,,,,,none,deferred,deferred,not evaluated,bootstrap conditions on fixed base PDF shapes
+PP_4D_fit_model,differential efficiency/fitter stability,,,,,none,deferred,deferred/backup,not evaluated as f_DPS-specific source,avoid double counting when propagated with sigma_total
+MC_feeddown,generator composition,,,,,none,no,study frozen,current workflow assumes DPS MC usable,external generator caveat
+global_normalization,luminosity_BR_total_rate,,,,,not applicable,no,not applicable,not an f_DPS-specific uncertainty,belongs to downstream cross sections
+downstream_covariance,"Cov(f_DPS,pair_total)",,,,,not applicable to f_DPS itself,no,unresolved downstream,needed for sigma_DPS statistical propagation,does not invalidate frozen f_DPS stat
+combined,quadrature_of_three_included_groups,0.170423232645,,0.010177290968,0.011083850610,sqrt(category^2+CR^2+DPS_closure^2) separately up/down,yes,user-approved,current accepted method systematic,scope-limited; excluded/deferred sources listed explicitly

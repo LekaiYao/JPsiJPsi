@@ -1,0 +1,5 @@
+quantity,phase_space,central,stat_rho0,syst_up,syst_down,unit,status
+f_DPS,mJJ>7.5 fiducial pair fraction,0.170423232645,0.0593312996229,0.010177290968,0.0110838506097,,accepted
+sigma_DPS,mJJ>7.5 GeV,6.339744254394001,2.2094917394602005,0.5746679684167104,0.5974245460024348,pb,preliminary_rho0
+sigma_DPS,no mJJ cut,6.421041898018483,2.237825133492835,0.5820372170526261,0.6050856133711637,pb,derived_preliminary_epsilon_fixed
+sigma_eff,single-Jpsi-matched; no pair-mass cut,2.476240292352045,0.8630178092516609,0.253003105586151,0.22353757033326158,mb,preliminary_rho0_epsilon_fixed

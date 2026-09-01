@@ -1,0 +1,3 @@
+slot,entries,calibration_status,calibration_covQual,calibration_edm,yield_fit_status,yield_fit_covQual,yield_fit_edm,prompt_yield,sum_prompt_sweight,closure_difference,source_root
+Jpsi1,2473,0,3,0.000178492874085,0,3,3.91868573447e-06,716.921069513,716.921069513,0.0,tests/atlas_data_driven_sps/results/fdps_systematics_final_v1/category/global_calibrated/jpsi1_sweights.root
+Jpsi2,2474,0,3,4.90643165061e-05,0,3,8.41607069882e-07,728.715303494,728.715303494,0.0,tests/atlas_data_driven_sps/results/fdps_systematics_final_v1/category/global_calibrated/jpsi2_sweights.root

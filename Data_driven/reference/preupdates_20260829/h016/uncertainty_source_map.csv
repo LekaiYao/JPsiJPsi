@@ -1,0 +1,31 @@
+quantity,source,type,effect_up,effect_down,unit,correlation_treatment,included,status
+f_DPS,fixed-500 full source-event bootstrap,stat,0.0593312996229,0.0593312996229,absolute fraction,sample SD; covers the full f_DPS workflow,yes,accepted
+sigma_DPS,f_DPS bootstrap,stat,2.2071243459718803,2.2071243459718803,pb,Cov with pair total unknown; rho scan supplied,yes,preliminary propagation
+sigma_DPS,pair total statistical,stat,0.102253939587,0.102253939587,pb,Cov with f_DPS unknown; rho scan supplied,yes,preliminary propagation
+sigma_eff,f_DPS bootstrap,stat,0.862080553476387,0.862080553476387,mb,Cov with pair total unknown; rho scan supplied,yes,preliminary propagation
+sigma_eff,pair total statistical,stat,0.03993935955406524,0.03993935955406524,mb,Cov with f_DPS unknown; rho scan supplied,yes,preliminary propagation
+sigma_eff,ATLAS single-Jpsi statistical,stat,0.0046589657429013075,0.0046589657429013075,mb,independent of CMS inputs,yes,preliminary propagation
+f_DPS,single-J category envelope,method syst,0.000778391595,0.006246760932,absolute fraction,included group; separate up/down quadrature,yes,accepted conditional method source
+sigma_DPS,single-J category envelope,method syst,0.028956167334000003,0.23237950667040003,pb,conditional independence from AN pair sources; matched nuisance variations unavailable,yes,preliminary propagation
+sigma_eff,single-J category envelope,method syst endpoint,0.09421862313833707,0.011258565094365736,mb,exact inverse-denominator endpoints; conditional independence from AN pair sources,yes,preliminary propagation
+f_DPS,CR definition/purity envelope,method syst,0.007830845807,0.006494652437,absolute fraction,included group; separate up/down quadrature,yes,accepted conditional method source
+sigma_DPS,CR definition/purity envelope,method syst,0.2913074640204,0.2416010706564,pb,conditional independence from AN pair sources; matched nuisance variations unavailable,yes,preliminary propagation
+sigma_eff,CR definition/purity envelope,method syst endpoint,0.09810565082010614,0.10878323839143489,mb,exact inverse-denominator endpoints; conditional independence from AN pair sources,yes,preliminary propagation
+f_DPS,pure-DPS full-workflow closure,method syst,0.00645362006318,0.00645362006318,absolute fraction,included group; separate up/down quadrature,yes,accepted conditional method source
+sigma_DPS,pure-DPS full-workflow closure,method syst,0.240074666350296,0.240074666350296,pb,conditional independence from AN pair sources; matched nuisance variations unavailable,yes,preliminary propagation
+sigma_eff,pure-DPS full-workflow closure,method syst endpoint,0.09746143678911023,0.09034938030214512,mb,exact inverse-denominator endpoints; conditional independence from AN pair sources,yes,preliminary propagation
+sigma_DPS,Branching fraction,AN pair syst,0.069737186798334,0.069737186798334,pb,does not enter f_DPS; retained for sigma_DPS; fully correlated cancellation in sigma_eff; AN percentage used directly without rescaling,yes,preliminary propagation
+sigma_eff,Branching fraction,AN pair syst endpoint,0.0,0.0,mb,does not enter f_DPS; retained for sigma_DPS; fully correlated cancellation in sigma_eff; exact endpoint,cancelled,cancelled
+sigma_DPS,CMS integrated luminosity,AN pair syst,0.076076931052728,0.076076931052728,pb,does not enter f_DPS; independent of ATLAS luminosity; AN percentage used directly without rescaling,yes,preliminary propagation
+sigma_eff,CMS integrated luminosity,AN pair syst endpoint,0.030075793024518127,0.029362533110893985,mb,does not enter f_DPS; independent of ATLAS luminosity; exact endpoint,yes,preliminary propagation
+sigma_DPS,Acceptance and efficiency correction,AN pair syst,0.386724399518034,0.386724399518034,pb,can affect both pair total and corrected f_DPS workflow; correlation unknown; conditional independence only; AN percentage used directly without rescaling,yes,preliminary propagation
+sigma_eff,Acceptance and efficiency correction,AN pair syst endpoint,0.16086332037643736,0.14236631275539535,mb,can affect both pair total and corrected f_DPS workflow; correlation unknown; conditional independence only; exact endpoint,yes,preliminary propagation
+sigma_DPS,Lifetime variable,AN pair syst,0.019019232763182,0.019019232763182,pb,can overlap the PP fit chain used by pair total and f_DPS cells; correlation unknown; conditional independence only; AN percentage used directly without rescaling,yes,preliminary propagation
+sigma_eff,Lifetime variable,AN pair syst endpoint,0.0074510740993543045,0.007406501372936969,mb,can overlap the PP fit chain used by pair total and f_DPS cells; correlation unknown; conditional independence only; exact endpoint,yes,preliminary propagation
+sigma_DPS,Fitter stability,AN pair syst,0.16229745291248643,0.16229745291248643,pb,can overlap the PP fit chain used by pair total and f_DPS cells; correlation unknown; conditional independence only; AN percentage used directly without rescaling,yes,preliminary propagation
+sigma_eff,Fitter stability,AN pair syst endpoint,0.06505721621942984,0.061809430074309724,mb,can overlap the PP fit chain used by pair total and f_DPS cells; correlation unknown; conditional independence only; exact endpoint,yes,preliminary propagation
+sigma_DPS,AN reported aggregate 2.5 pb,rounded display,,,pb,five percentages reconstruct 2.53679998865 pb; 2.5 pb is not used as an exact propagation input,no separate term,display-only comparison
+sigma_eff,ATLAS integrated-bin systematic,syst endpoint,0.04210819696606238,0.0417531864061611,mb,HEPData integrated uncertainty; exact numerator-squared endpoint,yes,preliminary propagation
+sigma_eff,ATLAS luminosity,syst endpoint,0.05627922173008759,0.055646839484224664,mb,1.13%; independent of CMS luminosity; exact numerator-squared endpoint,yes,preliminary propagation
+sigma_eff,mJJ extrapolation efficiency,model/stat,0.0,0.0,mb,fixed central by explicit 2026-08-29 user gate; future source-event jackknife and model-correlation proposal recorded,not in current round,preliminary gate; not zero uncertainty
+sigma_DPS and sigma_eff,"Cov(f_DPS,pair total)",stat covariance,,,,"rho=-1,0,+1 sensitivity; no replica-matched estimator; rho=0 preliminary use approved by user",not resolved,future covariance improvement

@@ -1,0 +1,8 @@
+{
+  "condition": "current DPS simulation is treated as correct",
+  "data_f_dps": 0.170423232645,
+  "expected_f_dps": 1.0,
+  "mapped_absolute_uncertainty": 0.00645362006318,
+  "recovered_f_dps": 1.03786819416,
+  "relative_closure_bias": 0.03786819416
+}

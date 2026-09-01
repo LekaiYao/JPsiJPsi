@@ -1,0 +1,20 @@
+{
+  "attempts": 500,
+  "binning_rule": "20 uniform bins over the predeclared [0.02, 0.40] range",
+  "central": 0.170423232645,
+  "failed": 0,
+  "histogram_bins": 20,
+  "histogram_range": [
+    0.02,
+    0.4
+  ],
+  "maximum": 0.381175859734,
+  "mean": 0.170392853017,
+  "median": 0.166563601064,
+  "minimum": 0.0317212086715,
+  "q16": 0.109759223901,
+  "q84": 0.232621415348,
+  "replacement_attempts": false,
+  "replicas": 500,
+  "sample_sd": 0.0593312996229
+}

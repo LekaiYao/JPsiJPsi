@@ -1,0 +1,140 @@
+{
+  "differences_from_h016_request_baseline": [
+    "No disagreement for the accepted f_DPS or the preliminary sigma_DPS(mJJ>7.5) central value.",
+    "The current AN and earlier H013-style sigma_eff calculation omitted the pair-specific mJJ extrapolation.",
+    "H016 applies epsilon_m from factorized DPS GEN-only event mixing before calculating sigma_eff.",
+    "No replica-matched Cov(f_DPS,sigma_pair_total) exists; rho=0 remains a preliminary reference, not a final statistical conclusion."
+  ],
+  "f_DPS": {
+    "central": 0.170423232645,
+    "display": "f_DPS = 0.170 +/- 0.059 (stat.) +0.010/-0.011 (method syst.)",
+    "method_syst_down": 0.0110838506097,
+    "method_syst_up": 0.010177290968,
+    "stat": 0.0593312996229,
+    "status": "accepted"
+  },
+  "mass_extrapolation": {
+    "epsilon_m": 0.9873388704020806,
+    "inverse_factor": 1.0128234894598684,
+    "uncertainty_included": false
+  },
+  "sigma_DPS_mJJ_gt_7p5_pb": {
+    "central": 6.339744254394001,
+    "components": {
+      "AN_pair_reconstructed_relative": 0.06819354808191168,
+      "AN_pair_reconstructed_syst_pb": 2.5367999886471146,
+      "AN_pair_reported_rounded_syst_pb": 2.5,
+      "AN_pair_sources": {
+        "acceptance_efficiency": 0.386724399518034,
+        "branching_fraction": 0.069737186798334,
+        "cms_luminosity": 0.076076931052728,
+        "fitter_stability": 0.16229745291248643,
+        "lifetime_variable": 0.019019232763182
+      },
+      "f_DPS_method_groups": {
+        "cr_definition_and_purity": {
+          "down": 0.2416010706564,
+          "up": 0.2913074640204
+        },
+        "pure_dps_full_workflow_closure": {
+          "down": 0.240074666350296,
+          "up": 0.240074666350296
+        },
+        "single_j_category": {
+          "down": 0.23237950667040003,
+          "up": 0.028956167334000003
+        }
+      },
+      "stat_from_f_DPS": 2.2071243459718803,
+      "stat_from_pair_total": 0.102253939587
+    },
+    "display": "sigma_DPS(mJJ>7.5) = 6.34 +/- 2.21 (stat., rho=0) +0.57/-0.60 (syst.) pb",
+    "stat_rho_scan": {
+      "-1.0": 2.10487040638488,
+      "0.0": 2.2094917394602005,
+      "1.0": 2.3093782855588803
+    },
+    "status": "preliminary; rho=0 statistical reference; AN percentages used directly; unknown shared-systematic correlations use conditional independence",
+    "syst_down": 0.5974245460024348,
+    "syst_up": 0.5746679684167104
+  },
+  "sigma_DPS_no_mJJ_cut_pb": {
+    "central": 6.421041898018483,
+    "display": "sigma_DPS(no mJJ cut) = 6.42 +/- 2.24 (stat., rho=0) +0.58/-0.61 (syst.) pb",
+    "stat_rho_scan": {
+      "-1.0": 2.1318621898555454,
+      "0.0": 2.237825133492835,
+      "1.0": 2.3389925736625936
+    },
+    "status": "derived preliminary; epsilon_m fixed without uncertainty",
+    "syst_down": 0.6050856133711637,
+    "syst_up": 0.5820372170526261
+  },
+  "sigma_eff_mb": {
+    "central": 2.476240292352045,
+    "components": {
+      "AN_pair_reconstructed_relative": 0.06819354808191168,
+      "AN_pair_reconstructed_syst_pb": 2.5367999886471146,
+      "ATLAS_luminosity_endpoint": {
+        "down": 0.055646839484224664,
+        "up": 0.05627922173008759
+      },
+      "ATLAS_single_bin_endpoint": {
+        "down": 0.0417531864061611,
+        "up": 0.04210819696606238
+      },
+      "CMS_pair_endpoint_sources": {
+        "acceptance_efficiency": {
+          "down": 0.14236631275539535,
+          "up": 0.16086332037643736
+        },
+        "branching_fraction": {
+          "down": 0.0,
+          "up": 0.0
+        },
+        "cms_luminosity": {
+          "down": 0.029362533110893985,
+          "up": 0.030075793024518127
+        },
+        "fitter_stability": {
+          "down": 0.061809430074309724,
+          "up": 0.06505721621942984
+        },
+        "lifetime_variable": {
+          "down": 0.007406501372936969,
+          "up": 0.0074510740993543045
+        }
+      },
+      "branching_fraction_effect": 0.0,
+      "f_DPS_method_endpoint_sources": {
+        "cr_definition_and_purity": {
+          "down": 0.10878323839143489,
+          "up": 0.09810565082010614
+        },
+        "pure_dps_full_workflow_closure": {
+          "down": 0.09034938030214512,
+          "up": 0.09746143678911023
+        },
+        "single_j_category": {
+          "down": 0.011258565094365736,
+          "up": 0.09421862313833707
+        }
+      },
+      "mass_extrapolation_uncertainty_effect": 0.0,
+      "stat_from_ATLAS_single": 0.0046589657429013075,
+      "stat_from_f_DPS": 0.862080553476387,
+      "stat_from_pair_total": 0.03993935955406524
+    },
+    "display": "sigma_eff = 2.48 +/- 0.86 (stat., rho=0) +0.25/-0.22 (syst.) mb",
+    "stat_rho_scan": {
+      "-1.0": 0.8221543946886218,
+      "0.0": 0.8630178092516609,
+      "1.0": 0.9020319448141835
+    },
+    "status": "preliminary; rho=0 statistical reference; exact source-by-source systematic endpoints; epsilon_m fixed by user gate; BR cancelled",
+    "syst_down": 0.22353757033326158,
+    "syst_up": 0.253003105586151,
+    "visible_pair_cross_section_pb": 0.022816222712511967
+  },
+  "status": "producer_ready_pending_consumer_review"
+}

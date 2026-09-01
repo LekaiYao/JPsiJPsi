@@ -1,0 +1,105 @@
+{
+  "producer": {
+    "project": "JPsiJPsi",
+    "branch": "sync/chensh-20260730",
+    "git_head": "b89508566a2096bf40e3a99addac7d09fd901e2b",
+    "runtime_for_frozen_analysis": "CMSSW_10_6_20 / ROOT 6.14/09 / cmssw-el7"
+  },
+  "data_driven_fraction": {
+    "central": 0.170423232645,
+    "stat": 0.0593312996229,
+    "method_syst_up": 0.010177290968,
+    "method_syst_down": 0.0110838506097,
+    "status": "user_frozen_and_H014_consumer_accepted",
+    "source": "tests/atlas_data_driven_sps/results/fdps_systematics_global_nominal_v1/summary.txt",
+    "bootstrap_source": "tests/atlas_data_driven_sps/results/route9p3_global_calibrated_allpairs/bootstrap_fixed500_global_nominal_v1/summary.txt",
+    "method_groups": {
+      "single_j_category": {
+        "up": 0.000778391595,
+        "down": 0.006246760932
+      },
+      "cr_definition_and_purity": {
+        "up": 0.007830845807,
+        "down": 0.006494652437
+      },
+      "pure_dps_full_workflow_closure": {
+        "up": 0.00645362006318,
+        "down": 0.00645362006318
+      }
+    }
+  },
+  "pair_cross_section": {
+    "central_pb": 37.2,
+    "stat_pb": 0.6,
+    "reported_syst_pb_rounded": 2.5,
+    "systematic_sources_relative": {
+      "branching_fraction": {"relative": 0.011, "label": "Branching fraction"},
+      "cms_luminosity": {"relative": 0.012, "label": "CMS integrated luminosity"},
+      "acceptance_efficiency": {"relative": 0.061, "label": "Acceptance and efficiency correction"},
+      "lifetime_variable": {"relative": 0.003, "label": "Lifetime variable"},
+      "fitter_stability": {"relative": 0.0256, "label": "Fitter stability"}
+    },
+    "systematic_combination": "Use the five AN percentages directly and combine them in quadrature; do not rescale them to the rounded 2.5 pb display value.",
+    "reconstructed_relative_systematic": 0.06819354808191168,
+    "reconstructed_absolute_systematic_pb": 2.5367999886471146,
+    "phase_space": "prompt Jpsi pair; each Jpsi 10<pT<40 GeV and abs(y)<2.0; m(JJ)>7.5 GeV",
+    "visible_convention": "physical pair cross section after division by B(Jpsi->mumu)^2",
+    "source": "current AN total prompt-prompt fiducial cross section and its five active systematic percentages",
+    "source_files": ["../AN/7_Systematic.tex", "../AN/docs/current_uncertainty_summary.md"]
+  },
+  "single_jpsi_cross_section": {
+    "visible_central_nb": 10.63,
+    "visible_stat_nb": 0.01,
+    "visible_bin_syst_nb": 0.09,
+    "luminosity_relative": 0.0113,
+    "phase_space": "prompt Jpsi; 10<pT<40 GeV and abs(y)<2.0; no pair-mass requirement",
+    "visible_convention": "X=B(Jpsi->mumu)*sigma(prompt Jpsi)",
+    "source": "ATLAS arXiv:2309.17177v2 HEPData Table 1 integration",
+    "reference": "docs/reference/ATLAS_13TeV_prompt_Jpsi_fiducial_cross_section.md"
+  },
+  "branching_fraction": {
+    "central": 0.05961,
+    "uncertainty": 0.00033,
+    "treatment": "common B cancels exactly between X^2 and the pair-visible denominator; remove the pair BR systematic component and add no separate BR uncertainty"
+  },
+  "mass_extrapolation": {
+    "definition": "epsilon_m=sigma_DPS(mJJ>7.5)/sigma_DPS(no mJJ cut)",
+    "method": "factorized event mixing of the two GEN_pair_id slots from DPS GEN-only acceptance MC; combine different source events",
+    "sample": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_[1-10].root",
+    "input_provenance": "mass-extrapolation-provenance section in validation.txt",
+    "extraction_record": "mass-extrapolation-reproduction section in validation.txt",
+    "selection_per_jpsi": "10<=pT<=40 GeV and abs(y)<2.0",
+    "pool1": 7772,
+    "pool2": 3943,
+    "all_cross_event_pairs": 30644975,
+    "pass_mJJ_gt_7p5": 30256975,
+    "native_same_event_crosscheck": {
+      "abs_y_lt_2p4_before_mass": 30,
+      "abs_y_lt_2p4_after_mass": 30,
+      "abs_y_lt_2p0_before_mass": 21,
+      "abs_y_lt_2p0_after_mass": 21
+    },
+    "uncertainty": null,
+    "uncertainty_status": "fixed central factor for this preliminary round by explicit user instruction; this does not assert zero uncertainty",
+    "user_gate": "On 2026-08-29 the user instructed that the mJJ extrapolation correction must be included and its uncertainty is not considered in the current round.",
+    "future_uncertainty_proposal": "Estimate finite-source precision with a delete-one-source-event jackknife of the epsilon_m numerator/denominator; treat generator/model variations as potentially correlated with the pure-DPS full-workflow closure.",
+    "correlation_with_pure_dps_closure": "The artifacts are different analysis levels, but both depend on the current DPS generator/model; model correlation is unknown and must not be silently combined as independent in a future uncertainty update.",
+    "source_code": "GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/count.cpp",
+    "source_code_sha256": "ac6732e47bb2e1157698a57a06c84a9426b15b6e26acd81a76a456b1204d82af"
+  },
+  "correlations": {
+    "statistical": "Cov(f_DPS,sigma_pair_total) unavailable; report rho=0 preliminary reference and rho=-1,0,+1 sensitivity",
+    "systematic": "The five AN pair sources are propagated individually. BR and luminosity have explicit treatments; acceptance/efficiency, lifetime-variable, and fitter correlations with the f_DPS workflow remain unknown and use conditional independence only for this preliminary numerical reference.",
+    "luminosity": "ATLAS single-Jpsi and CMS pair luminosity sources treated as independent",
+    "branching_fraction": "fully correlated and cancelled"
+  },
+  "cr_sps_leakage": {
+    "nominal": "zero SPS leakage in CR",
+    "variation": "SPS MC supplies r_SPS^CR and the MC-leakage variants subtract the corresponding SPS contribution before DPS normalization",
+    "combination": "zero/MC-leakage variants and CR boundary changes form one CR definition/purity envelope; not an additional independent source",
+    "envelope_up": 0.007830845807,
+    "envelope_down": 0.006494652437,
+    "downward_endpoint": "abs(Delta phi)<=110 deg with MC-leakage treatment",
+    "future_improvement": "reduce or replace SPS-MC dependence using data constraints, alternative generators/models, or a more direct leakage validation"
+  }
+}

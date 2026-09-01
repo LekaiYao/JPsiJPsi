@@ -1,0 +1,69 @@
+{
+  "coverage": [
+    "source-event sampling fluctuations",
+    "single-J calibration and prompt-yield extraction fluctuations",
+    "signed-sWeight DPS-template fluctuations and correlations",
+    "PP cell extraction and CR-normalization fluctuations"
+  ],
+  "ensemble": {
+    "maximum": 0.381175859734,
+    "mean": 0.170392853017,
+    "mean_shift_from_nominal": -3.03796275744e-05,
+    "median": 0.166563601064,
+    "minimum": 0.0317212086715,
+    "q16": 0.109759223901,
+    "q84": 0.232621415348,
+    "sample_sd": 0.0593312996229,
+    "sd_monte_carlo_precision_approx": 0.00187809947293
+  },
+  "method": "nonparametric full source-event bootstrap with replacement within each replica",
+  "nominal_f_dps": 0.170423232645,
+  "not_covered": [
+    "systematic variations",
+    "downstream covariance with the total pair cross-section estimator"
+  ],
+  "not_separate": [
+    "mixed-pair counting error",
+    "single-J fit yield error",
+    "CR count error",
+    "finite-ensemble precision as an added physical uncertainty"
+  ],
+  "qa": {
+    "calibrations": "1000/1000",
+    "max_calibration_edm": 0.000910132980514,
+    "max_pp_edm": 0.00106433123889,
+    "max_yield_fit_edm": 3.72449043367e-05,
+    "minimum_pp_effective_entries": 29.8009548043,
+    "minimum_pp_fit_entries": 35,
+    "pp_cells": "6000/6000",
+    "yield_fits": "1000/1000"
+  },
+  "recommended_display": {
+    "ensemble_mean": 0.1704,
+    "finite_ensemble_precision": 0.0019,
+    "statistical_uncertainty": 0.059
+  },
+  "resampling_unit": "2492 selected source events; Jpsi1/Jpsi2 kept paired",
+  "seed_policy": {
+    "attempt_ids": "job_index*10 + local_index 0..4",
+    "attempted": 500,
+    "base_seed": 20260806,
+    "failed": 0,
+    "replacement_attempts": false,
+    "requested": 500,
+    "successful": 500
+  },
+  "status": "user_frozen_for_current_global_nominal",
+  "supersedes": {
+    "baseline": "H011 500 successes from 529 attempts",
+    "old_sd": 0.056796474528,
+    "reason": "fixed current-global 500/500 ensemble has zero failures and no replacement"
+  },
+  "workflow_per_replica": [
+    "two global single-J resolution calibrations",
+    "two frozen-scale yield-only sPlots",
+    "all-cross-event mixing",
+    "12 PP cell fits",
+    "single-CR normalization and f_DPS estimator"
+  ]
+}

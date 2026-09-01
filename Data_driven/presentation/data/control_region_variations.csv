@@ -1,0 +1,7 @@
+label,variation,f_dps,signed_shift,leakage_model
+Baseline,baseline,0.170423232645,0.0,zero leakage
+|Delta phi| <= 70 deg,phi70_zero,0.178254078452,0.007830845807,zero leakage
+|Delta phi| <= 70 deg,phi70_purity,0.17526159011,0.004838357465,MC leakage
+|Delta phi| <= 110 deg,phi110_zero,0.171777926966,0.001354694321,zero leakage
+|Delta phi| <= 110 deg,phi110_purity,0.163928580208,-0.006494652437,MC leakage
+|Delta y| >= 2.4,dy2p4_zero_or_purity,0.170417031446,-6.201199e-06,zero or MC leakage

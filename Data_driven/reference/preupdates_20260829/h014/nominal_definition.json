@@ -1,0 +1,134 @@
+{
+  "decomposition": {
+    "alpha": 0.000188327762316,
+    "control_region_assumption": "nominal DPS-only; SPS leakage fraction zero",
+    "data_pp_total": 4887.00635042,
+    "dps_total": 832.859420193,
+    "estimator": "f_DPS = sum(N_DPS cells) / sum(N_PP cells)",
+    "f_DPS": 0.170423232645,
+    "f_SPS": 0.829576767355,
+    "signed_subtraction": true,
+    "sps_total": 4054.14693023
+  },
+  "ignored_provenance": "docs/ and tests/ are excluded by repository .gitignore",
+  "input": {
+    "data_files": 119,
+    "selected_source_events": 2492,
+    "selection": [
+      "passHLT and trigger matched",
+      "10 <= pT(Jpsi1,Jpsi2) <= 40 GeV",
+      "abs(y(Jpsi1,Jpsi2)) < 2.0",
+      "same primary vertex",
+      "m(JJ) >= 7.5 GeV"
+    ],
+    "source_entries": 6132
+  },
+  "known_stale_metadata": [
+    {
+      "actual": "global nominal subsequently frozen by user",
+      "field": "nominal_changed=false",
+      "path": "tests/atlas_data_driven_sps/results/fdps_systematics_final_v1/category/global_calibrated/metadata.txt"
+    },
+    {
+      "actual": "12 cells in summary.txt/cells.csv and fit input",
+      "field": "binning=adaptive_14_cells_abs_delta_y_vs_abs_delta_phi",
+      "path": "tests/atlas_data_driven_sps/results/fdps_systematics_final_v1/category/global_calibrated/templates_2d/metadata.txt"
+    }
+  ],
+  "mixing": {
+    "accepted_pairs": 6061749,
+    "cartesian_pairs": 6118202,
+    "correction_rejected": 0,
+    "mass_rejected": 53997,
+    "pair_weight": "prompt_sweight_1 * prompt_sweight_2 * nominal_pair_correction",
+    "pairing": "all Jpsi1(source A) x Jpsi2(source B) Cartesian combinations",
+    "random_sampling": false,
+    "same_source_rejected": 2456,
+    "same_source_rejection": "source_entry with run/lumi/event fallback"
+  },
+  "pp_extraction": {
+    "accepted_cell_fits": 12,
+    "cells": 12,
+    "geometry": {
+      "below_dy_1p8_cells": 9,
+      "control_cell": [
+        1.8,
+        4.0,
+        0.0,
+        1.57079632679
+      ],
+      "dphi_edges": [
+        0.0,
+        1.57079632679,
+        2.35619449019,
+        3.14159265359
+      ],
+      "dy_edges_below_1p8": [
+        0.0,
+        0.6,
+        1.2,
+        1.8
+      ],
+      "high_dphi_cells": [
+        [
+          1.8,
+          4.0,
+          1.57079632679,
+          2.35619449019
+        ],
+        [
+          1.8,
+          4.0,
+          2.35619449019,
+          3.14159265359
+        ]
+      ]
+    },
+    "observables": "mass1, ctau1, mass2, ctau2 4D PP fit in each cell",
+    "sumw2_error": false
+  },
+  "producer_version": {
+    "branch": "sync/chensh-20260730",
+    "git_head": "24823a5d476c18aee1f3134e86da645063965ef1"
+  },
+  "projections": {
+    "included_in_systematic": false,
+    "role": "formal cross-check",
+    "variables": [
+      "abs(delta_y)",
+      "abs(delta_phi)",
+      "m(JJ)",
+      "abs(y(JJ))"
+    ]
+  },
+  "role": "data_driven_internal_nominal_formal_crosscheck_not_CMS_nominal",
+  "runtime": "CMSSW_10_6_20 / ROOT 6.14/09 / cmssw-el7",
+  "single_jpsi": {
+    "components": [
+      "prompt",
+      "nonprompt",
+      "combinatorial"
+    ],
+    "entries": {
+      "Jpsi1": 2473,
+      "Jpsi2": 2474
+    },
+    "fit": "unweighted 2D extended mass-times-ctau model",
+    "nominal_categories": "one global category per slot",
+    "prompt_yields": {
+      "Jpsi1": 716.921069513,
+      "Jpsi2": 728.715303494
+    },
+    "slot_treatment": "Jpsi1 and Jpsi2 fitted separately; no pT ordering assumed",
+    "stage_1": "float resolution scales and yields; finite multistart; keep valid minimum NLL",
+    "stage_2": "freeze resolution scales; yield-only fit; compute prompt sWeights",
+    "sweight_rule": "signed prompt sWeights retained; sums close exactly to fitted prompt yields"
+  },
+  "status": "user_frozen_producer_result_consumer_review_pending",
+  "tracked_dirty_files_not_owned_by_H014": [
+    "Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/Fit_pull.cpp",
+    "Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/Tpl_Fit.cpp",
+    "Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/Tpl_Fit_thy.cpp",
+    "GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/count.cpp"
+  ]
+}

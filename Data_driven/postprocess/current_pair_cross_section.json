@@ -1,0 +1,39 @@
+{
+  "central_pb": 36.9988256697726,
+  "stat_pb": 2.03098814032223,
+  "reported_syst_pb_rounded": 2.338557486295,
+  "systematic_sources_relative": {
+    "branching_fraction": {
+      "relative": 0.011,
+      "label": "Branching fraction"
+    },
+    "cms_luminosity": {
+      "relative": 0.012,
+      "label": "CMS integrated luminosity"
+    },
+    "acceptance_efficiency": {
+      "relative": 0.061,
+      "label": "Acceptance and efficiency correction (temporary historical input)"
+    },
+    "lifetime_variable": {
+      "relative": 0.003,
+      "label": "Lifetime variable"
+    },
+    "fitter_stability": {
+      "relative": 0.000177806596974,
+      "label": "ROOT 6.40 nominal/reference fitter shift"
+    }
+  },
+  "systematic_combination": "Temporary current-round input: combine BR, luminosity, historical correction, lifetime and the ROOT 6.40 nominal/reference fitter shift in quadrature. The correction term must be revisited before finalization.",
+  "reconstructed_relative_systematic": 0.063206262468097,
+  "reconstructed_absolute_systematic_pb": 2.338557486295,
+  "phase_space": "prompt Jpsi pair; each Jpsi 10<=pT<=40 GeV and abs(y)<2.0; m(JJ)>=7.5 GeV",
+  "visible_convention": "physical pair cross section after division by B(Jpsi->mumu)^2",
+  "source": "ROOT 6.40.02 corrected-error nominal 4D fit; temporary correction systematic",
+  "source_files": [
+    "Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/fit_results/corrected_error_nominal_root640_unseeded_allcomb0_v1_20260901/cross_sections.csv",
+    "Data/docs/handoff.md"
+  ],
+  "source_cross_sections_sha256": "6497c74d503c0a51c199d8d35e4f93ce6f6205b043a7ca78e020f4a0159dfc5a",
+  "status": "confirmed central/stat; temporary systematic pending correction-systematic revisit"
+}

@@ -1,0 +1,4 @@
+label,variation,f_dps,signed_shift
+Central (no split),central,0.170423232645,0.0
+pT split at 15 GeV,pt15,0.17120162424,0.000778391595
+|y| split at 1.2,absy1p2,0.164176471713,-0.006246760932

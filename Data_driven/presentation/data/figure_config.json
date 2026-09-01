@@ -1,0 +1,22 @@
+{
+  "accepted_analysis_version": "sync/chensh-20260730@24823a5d476c18aee1f3134e86da645063965ef1",
+  "analysis_rerun": false,
+  "cell_error": "fitted prompt-prompt uncertainty propagated to DPS/SPS components as stored in accepted cells.csv",
+  "normalization": "Data-derived DPS is normalized to Data prompt-prompt yield in the single control cell",
+  "pair_weight": "signed prompt-sWeight product times nominal pair correction",
+  "physics_selection": "Prompt J/psi pair; each J/psi 10 <= pT <= 40 GeV and |y| < 2.0; same PV; m(J/psi J/psi) >= 7.5 GeV",
+  "producer_branch": "sync/chensh-20260730",
+  "producer_head": "b89508566a2096bf40e3a99addac7d09fd901e2b",
+  "titles": {
+    "F01": "Prompt-prompt yield in Data",
+    "F02": "Data-driven control region in the 12-cell phase space",
+    "F03": "DPS and SPS decomposition",
+    "F04": "Prompt single-J/psi extraction in Data",
+    "F05": "Single-J/psi category dependence",
+    "F06": "Full-workflow bootstrap distribution",
+    "F07": "Control-region definition and purity variations",
+    "F08": "Pure-DPS full-workflow closure",
+    "F09": "Data-driven method uncertainty",
+    "F10": "SPS residual significance by cell"
+  }
+}
