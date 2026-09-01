@@ -1,0 +1,13 @@
+universe = vanilla
+executable = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/run_weightdata_corrected_v1.sh
+output = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/condor/logs/weightdata.$(ClusterId).$(ProcId).out
+error = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/condor/logs/weightdata.$(ClusterId).$(ProcId).err
+log = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/condor/logs/weightdata.$(ClusterId).log
+request_cpus = 1
+request_memory = 3000
+request_disk = 2000000
++MaxRuntime = 14400
+should_transfer_files = NO
+environment = "PATH=/cvmfs/cms.cern.ch/common:/usr/local/bin:/usr/bin:/bin"
+
+queue 1

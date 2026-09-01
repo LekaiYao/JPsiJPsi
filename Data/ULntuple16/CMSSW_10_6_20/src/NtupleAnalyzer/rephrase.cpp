@@ -11,11 +11,13 @@ using namespace std;
 #define PI 3.14159265359
 // I/O settings area
 // Data
-// #define N_DIR 7
-// string prefix[N_DIR] = {"B/Ntuple_2016_B", "C/Ntuple_2016_C", "D/Ntuple_2016_D", "E/Ntuple_2016_E", "F/Ntuple_2016_F", "G/Ntuple_2016_G", "H/Ntuple_2016_H"};
-// string infix = "/eos/home-c/chensh/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/";
-// int suffix[N_DIR] = {20, 9, 14, 3, 8, 29, 36};
-// string outFile = "WeightData.root";
+#ifndef REPHRASE_IO_CONFIGURED
+#define N_DIR 7
+string prefix[N_DIR] = {"B/Ntuple_2016_B", "C/Ntuple_2016_C", "D/Ntuple_2016_D", "E/Ntuple_2016_E", "F/Ntuple_2016_F", "G/Ntuple_2016_G", "H/Ntuple_2016_H"};
+string infix = "/eos/user/c/chensh/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/";
+int suffix[N_DIR] = {20, 9, 14, 3, 8, 29, 36};
+string outFile = "WeightData.root";
+#endif
 // SPS LO
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
@@ -35,13 +37,11 @@ using namespace std;
 // int suffix[N_DIR] = {10};
 // string outFile = "WeightSPS_pythia.root";
 // SPS star
-#ifndef REPHRASE_IO_CONFIGURED
-#define N_DIR 1
-string prefix[N_DIR] = {""};
-string infix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/Ntuple_2016_SPSstar";
-int suffix[N_DIR] = {1};
-string outFile = "WeightSPSstar.root";
-#endif
+// #define N_DIR 1
+// string prefix[N_DIR] = {""};
+// string infix = "/eos/home-l/leyao/26JJ/MC_Maker/HelacOnia2016/CMSSW_10_6_20/src/NTUPLE/NLO_gpt0p8/Ntuple_2016_SPSstar";
+// int suffix[N_DIR] = {1};
+// string outFile = "WeightSPSstar.root";
 // NLO (upstream chensh HELAC-Onia samples; commented option)
 // #define N_DIR 1
 // string prefix[N_DIR] = {""};
@@ -217,7 +217,7 @@ class Process {
     void readMatrix() {
         string line;
         // Save acc&eff in arrays
-        ifstream accFile("acceptance.txt");
+        ifstream accFile("acceptance_sps_full10_v1.txt");
         if(!accFile.is_open()) return;
         int acc_ptBin = 0, acc_yBin = 0, lineCnt = 0;
         while(getline(accFile, line)) {
@@ -247,7 +247,7 @@ class Process {
             lineCnt++;
         }
         accFile.close();
-        ifstream effFile("efficiency_0_0.6.txt");
+        ifstream effFile("efficiency_sps0p8_dps0p2_dedup60_v1.txt");
         if(!effFile.is_open()) return;
         int eff_ptBin = 0, eff_yBin = 0;
         lineCnt = 0;
