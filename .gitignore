@@ -62,6 +62,16 @@ update/
 comments/
 docs/
 tests/
+Data_driven/results/
+Data_driven/presentation/figures/
+Data_driven/postprocess/output/
+Data_driven/presentation/figure_manifest.csv
+Data_driven/presentation/package_checksums.sha256
+Data_driven/presentation/package_metadata.json
+
+# Local Data fit artifacts, run archives, and obsolete workflow snapshots
+Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/fit_results/
+Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/archive/
 
 #md
 *.md
