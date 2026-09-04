@@ -48,7 +48,11 @@ void Fit_4D_diff(
     double vmax,
     bool isRef=false,
     bool useNativeAsymptotic=true,
-    string resultTag="corrected_error_nominal_root640_unseeded"
+    string resultTag="corrected_error_nominal_root640_unseeded",
+    string weightDataFileName="WeightData.root",
+    string totalModelDirectory="",
+    bool writeGenericWorkspace=true,
+    bool allowStrategy2=true
 ) {
     if(!useNativeAsymptotic) {
         failDifferentialFit(
@@ -90,9 +94,9 @@ void Fit_4D_diff(
     // Preserve the historical open-bin selection used by the AN chain.
     const string sel = var + " > " + to_string(vmin) +
         " && " + var + " < " + to_string(vmax);
-    TFile dataFile("WeightData.root", "READ");
+    TFile dataFile(weightDataFileName.c_str(), "READ");
     if(dataFile.IsZombie()) {
-        failDifferentialFit("Cannot open WeightData.root");
+        failDifferentialFit("Cannot open " + weightDataFileName);
         return;
     }
     TTree *dataTree = dynamic_cast<TTree *>(dataFile.Get("data"));
@@ -111,7 +115,9 @@ void Fit_4D_diff(
     }
 
     // Shape parameters are fixed to the matching no-seed total-fit workspace.
-    const string totalModelFileName = "Model_4D_tot" + ref + ".root";
+    const string totalModelBaseName = "Model_4D_tot" + ref + ".root";
+    const string totalModelFileName = totalModelDirectory.empty() ?
+        totalModelBaseName : totalModelDirectory + "/" + totalModelBaseName;
     TFile totalModelFile(totalModelFileName.c_str(), "READ");
     if(totalModelFile.IsZombie()) {
         failDifferentialFit("Cannot open " + totalModelFileName);
@@ -164,14 +170,19 @@ void Fit_4D_diff(
     RooFitResult *result = 0;
     bool sigCombBoundaryFallback = false;
     bool combCombBoundaryFallback = false;
-    const int maxFitAttempts = 3;
+    int acceptedStrategy = -1;
+    bool acceptedOffset = false;
+    const int maxFitAttempts = allowStrategy2 ? 4 : 1;
     for(int attempt = 0; attempt < maxFitAttempts; ++attempt) {
         delete result;
         result = 0;
+        const int minimizerStrategy = attempt == 0 ? 1 : 2;
+        const bool useOffset = attempt > 0;
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 40, 0)
         try {
             result = pdfAll->fitTo(
-                *fitData, Save(), Extended(kTRUE), AsymptoticError(kTRUE));
+                *fitData, Save(), Extended(kTRUE), AsymptoticError(kTRUE),
+                Strategy(minimizerStrategy), Offset(useOffset));
         } catch(const std::exception &error) {
             cerr << "Fit attempt " << attempt + 1
                  << " threw an exception: " << error.what() << endl;
@@ -230,11 +241,38 @@ void Fit_4D_diff(
 #endif
         if(result) {
             cout << "Fit attempt " << attempt + 1
+                 << ": strategy=" << minimizerStrategy
+                 << ", offset=" << (useOffset ? 1 : 0)
                  << ": status=" << result->status()
                  << ", covQual=" << result->covQual()
                  << ", EDM=" << result->edm() << endl;
         }
-        if(acceptedDifferentialFit(result)) break;
+        if(acceptedDifferentialFit(result)) {
+            acceptedStrategy = minimizerStrategy;
+            acceptedOffset = useOffset;
+            break;
+        }
+        const auto atLowerBoundary = [](const RooRealVar *parameter) {
+            if(!parameter || !parameter->hasMin()) return false;
+            const double tolerance = 1.0e-4 * std::max(
+                1.0, std::fabs(parameter->getError()));
+            return std::fabs(parameter->getMin()) <= tolerance &&
+                parameter->getVal() <= parameter->getMin() + tolerance;
+        };
+        if(!sigCombBoundaryFallback && atLowerBoundary(n_Sig_Comb)) {
+            n_Sig_Comb->setVal(0.0);
+            n_Sig_Comb->setConstant(kTRUE);
+            sigCombBoundaryFallback = true;
+            cerr << "Activating approved boundary fallback after failed fit: "
+                 << "fixing n_Sig_Comb=0 (shared with n_Comb_Sig)" << endl;
+        }
+        if(!combCombBoundaryFallback && atLowerBoundary(n_Comb_Comb)) {
+            n_Comb_Comb->setVal(0.0);
+            n_Comb_Comb->setConstant(kTRUE);
+            combCombBoundaryFallback = true;
+            cerr << "Activating approved boundary fallback after failed fit: "
+                 << "fixing n_Comb_Comb=0" << endl;
+        }
     }
     if(!acceptedDifferentialFit(result)) {
         std::ostringstream failure;
@@ -258,7 +296,9 @@ void Fit_4D_diff(
 
     // Retain generic workspaces for compatibility and save a unique result
     // artifact so later bins cannot overwrite the fit used for the table.
-    wsp->writeToFile(("Model_4D_diff" + ref + ".root").c_str());
+    if(writeGenericWorkspace) {
+        wsp->writeToFile(("Model_4D_diff" + ref + ".root").c_str());
+    }
     gSystem->mkdir(resultDirectory.c_str(), kTRUE);
     TFile resultFile(resultFileName.c_str(), "RECREATE");
     result->Write("fit_result_native_asymptotic");
@@ -277,6 +317,8 @@ void Fit_4D_diff(
         combCombBoundaryFallback ? 1 : 0).Write();
     TParameter<int>("boundary_fallback_n_Sig_Comb_and_n_Comb_Sig_shared_fixed_zero",
         sigCombBoundaryFallback ? 1 : 0).Write();
+    TParameter<int>("minimizer_strategy", acceptedStrategy).Write();
+    TParameter<int>("offset_enabled", acceptedOffset ? 1 : 0).Write();
     resultFile.Close();
 
     cout << std::setprecision(15)
@@ -286,7 +328,9 @@ void Fit_4D_diff(
          << ", n_Sig_Comb_n_Comb_Sig_shared_fallback="
          << (sigCombBoundaryFallback ? 1 : 0)
          << ", n_Comb_Comb_fallback="
-         << (combCombBoundaryFallback ? 1 : 0) << endl;
+         << (combCombBoundaryFallback ? 1 : 0)
+         << ", strategy=" << acceptedStrategy
+         << ", offset=" << (acceptedOffset ? 1 : 0) << endl;
     delete result;
     delete fitData;
 }

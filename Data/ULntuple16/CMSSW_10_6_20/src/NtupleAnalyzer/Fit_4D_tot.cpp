@@ -212,10 +212,15 @@ void Fit_4D_tot(
     bool useSumW2=false,
     bool useAsymptotic=false,
     bool useNativeAsymptotic=true,
-    bool useSeed=false
+    bool useSeed=false,
+    int minimizerStrategy=2
 ) {
     if(useNativeAsymptotic && (useSumW2 || useAsymptotic)) {
         cerr << "Native AsymptoticError cannot be combined with another error branch" << endl;
+        return;
+    }
+    if(minimizerStrategy < 0 || minimizerStrategy > 2) {
+        cerr << "Minimizer strategy must be 0, 1, or 2" << endl;
         return;
     }
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 40, 0)
@@ -337,34 +342,69 @@ void Fit_4D_tot(
         delete fitData;
         return;
     }
+    if(useNativeAsymptotic) {
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6, 40, 0)
+        RooFitResult *prefitResult = 0;
+        const int maximumPrefitAttempts = 6;
+        for(int attempt = 0; attempt < maximumPrefitAttempts; ++attempt) {
+            delete prefitResult;
+            prefitResult = pdf_all.fitTo(
+                *fitData, Save(), Extended(kTRUE), SumW2Error(kFALSE),
+                Strategy(minimizerStrategy));
+            if(prefitResult) {
+                cout << "Central-value prefit attempt " << attempt + 1
+                     << ": strategy=" << minimizerStrategy
+                     << ", status=" << prefitResult->status()
+                     << ", covQual=" << prefitResult->covQual()
+                     << ", EDM=" << prefitResult->edm() << endl;
+            }
+            if(prefitResult && !prefitResult->status() &&
+               prefitResult->edm() < 0.01) break;
+        }
+        if(!prefitResult || prefitResult->status() ||
+           prefitResult->edm() >= 0.01) {
+            cerr << "Total 4D central-value prefit failed" << endl;
+            delete prefitResult;
+            delete fitData;
+            return;
+        }
+        delete prefitResult;
+#endif
+    }
     RooFitResult *res = 0;
     // evt_weight is an inverse acceptance/efficiency correction.  The
     // weighted likelihood determines the central values; SumW2Error(kTRUE)
     // applies RooFit's squared-weight Hessian correction to the covariance.
     // This covariance correction is deterministic at a fitted parameter
     // point, so do not repeat a failed Hessian on the same state.
-    const int maxFitAttempts = (useAsymptotic || useNativeAsymptotic) ? 3 :
+    const int maxFitAttempts = (useAsymptotic || useNativeAsymptotic) ? 6 :
         (useSumW2 ? 1 : 50);
     for(int attempt = 0; attempt < maxFitAttempts; ++attempt) {
         delete res;
         if(useNativeAsymptotic) {
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 40, 0)
             res = pdf_all.fitTo(
-                *fitData, Save(), Extended(kTRUE), AsymptoticError(kTRUE));
+                *fitData, Save(), Extended(kTRUE), AsymptoticError(kTRUE),
+                Strategy(minimizerStrategy));
 #endif
         } else if(useAsymptotic) {
             // Keep the original weighted extended likelihood and obtain its
             // inverse Hessian.  The sandwich correction is calculated below.
-            res = pdf_all.fitTo(*fitData, Save(), Extended(kTRUE), SumW2Error(kFALSE));
+            res = pdf_all.fitTo(
+                *fitData, Save(), Extended(kTRUE), SumW2Error(kFALSE),
+                Strategy(minimizerStrategy));
         } else if(useSumW2) {
-            res = pdf_all.fitTo(*fitData, Save(), Extended(kTRUE), SumW2Error(kTRUE));
+            res = pdf_all.fitTo(
+                *fitData, Save(), Extended(kTRUE), SumW2Error(kTRUE),
+                Strategy(minimizerStrategy));
         } else {
             // Reproduce the previous AN fit convention exactly: weighted
             // central likelihood with RooFit's default SumW2Error(false).
-            res = pdf_all.fitTo(*fitData, Save());
+            res = pdf_all.fitTo(*fitData, Save(), Strategy(minimizerStrategy));
         }
         if(res) {
             cout << "Fit attempt " << attempt + 1
+                 << ": strategy=" << minimizerStrategy
                  << ": status=" << res->status()
                  << ", covQual=" << res->covQual()
                  << ", EDM=" << res->edm() << endl;
@@ -506,6 +546,7 @@ void Fit_4D_tot(
     cout<<"Error convention: "<<(useNativeAsymptotic ? "native AsymptoticError(true)" :
         (useAsymptotic ? "asymptotic sandwich covariance" :
         (useSumW2 ? "SumW2Error(true)" : "previous SumW2Error(false)")))<<endl;
+    cout<<"Minimizer strategy: "<<minimizerStrategy<<endl;
     cout<<"Status: "<<res->status()<<endl;
     cout<<"Event yield: "<<n_P_P.getVal()<<" +/- "<<n_P_P.getError()<<endl;
     if(useAsymptotic) {

@@ -68,7 +68,7 @@ void add_latex(TLatex &latex) {
     latex.DrawLatex(0.27, 0.85, "Preliminary");
     latex.SetTextSize(0.03);
     latex.SetTextFont(42);
-    latex.DrawLatex(0.74, 0.91, "36.31 fb^{-1} (13TeV)");
+    latex.DrawLatex(0.74, 0.91, "36.684 fb^{-1} (13TeV)");
     return;
 }
 void set_pull_style(RooPlot* frame_pull) {

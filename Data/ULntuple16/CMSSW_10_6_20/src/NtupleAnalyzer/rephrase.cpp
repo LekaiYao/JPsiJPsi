@@ -4,6 +4,10 @@
 // Output root file contains following information: event(mass, weight), dimuon(mass, pt, eta, phi, ctau), muon(pt)
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <cstdlib>
+#include <stdexcept>
+#include <vector>
 #include "TFile.h"
 #include "TTree.h"
 #include "TLorentzVector.h"
@@ -12,11 +16,11 @@ using namespace std;
 // I/O settings area
 // Data
 #ifndef REPHRASE_IO_CONFIGURED
-#define N_DIR 7
-string prefix[N_DIR] = {"B/Ntuple_2016_B", "C/Ntuple_2016_C", "D/Ntuple_2016_D", "E/Ntuple_2016_E", "F/Ntuple_2016_F", "G/Ntuple_2016_G", "H/Ntuple_2016_H"};
-string infix = "/eos/user/c/chensh/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/";
-int suffix[N_DIR] = {20, 9, 14, 3, 8, 29, 36};
+string inputManifest = "data_ntuple_manifest_chensh_newdata_v1.list";
+int expectedInputFiles = 167;
 string outFile = "WeightData.root";
+string acceptanceFileName = "/eos/home-l/leyao/26JJ/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/closure_results/nominal_mixed23_sps0p85_dps0p15_avgacc_v2_20260902/acceptance_sps0p85_dps0p15.txt";
+string efficiencyFileName = "/eos/home-l/leyao/26JJ/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/closure_results/inputs_mixed23_sps0p85_dps0p15_avgacc_v1_20260902/efficiency_sps0p85_dps0p15_avgacc_19x10.txt";
 #endif
 // SPS LO
 // #define N_DIR 1
@@ -70,6 +74,8 @@ string outFile = "WeightData.root";
 
 class Process {
     private:
+    bool symmetrizeJpsiLabels;
+    unsigned int symmetrizationSeed;
     vector<Double_t> acc_pt, acc_y, eff_pt, eff_y;
     Double_t **nGen_Jpsi, **nAcc_Jpsi;
     Double_t **nBin_Jpsi, **nVtx_Jpsi, **nVtx_evt, **nTrg_evt;
@@ -85,11 +91,12 @@ class Process {
         w *= nBin_Jpsi[i][j] / nVtx_Jpsi[i][j] * nBin_Jpsi[k][l] / nVtx_Jpsi[k][l] * nVtx_evt[l][j] / nTrg_evt[l][j];
         return w;
     }
-    void readTree(string& fileName) {
+    void readTree(const string& fileName) {
         // Handle root file
         TFile file(fileName.c_str(), "READ");
+        if(file.IsZombie()) throw runtime_error("Cannot open input ROOT file: " + fileName);
         TTree *inTree = (TTree *)file.Get("rootuple/oniaTree");
-        if(!inTree) return;
+        if(!inTree) throw runtime_error("Missing rootuple/oniaTree in input ROOT file: " + fileName);
         int nEvent = inTree->GetEntries();
         // Define input tree variables
         vector<Double_t> *REmu_pt = 0;
@@ -124,6 +131,7 @@ class Process {
         // inTree->SetBranchAddress("REevt_L1muPtMax", &REevt_L1muPtMax);
         // Loop on input tree entries
         cout<<fileName<<" has events: "<<nEvent<<endl;
+        if(symmetrizeJpsiLabels) std::srand(symmetrizationSeed);
         for(int i = 0; i < nEvent; i++) {// && i < 100
             cout<<"Processing No."<<i<<'\r';
             inTree->GetEntry(i);
@@ -133,6 +141,15 @@ class Process {
                 if(!REevt_matchTrg->at(j)) continue;
                 // if(REevt_vtxProb->at(j) == 0) continue;
                 int JpsiId1 = REevt_JpsiId1->at(j), JpsiId2 = REevt_JpsiId2->at(j);
+                bool labelsSwapped = false;
+                if(symmetrizeJpsiLabels) {
+                    randomizationDraws++;
+                    if((double)std::rand() / (RAND_MAX + 1.0) <= 0.5) {
+                        std::swap(JpsiId1, JpsiId2);
+                        labelsSwapped = true;
+                        randomizedCandidateSwaps++;
+                    }
+                }
                 if(REJpsi_pt->at(JpsiId1) > 40 || REJpsi_pt->at(JpsiId1) < 10) continue;
                 if(REJpsi_pt->at(JpsiId2) > 40 || REJpsi_pt->at(JpsiId2) < 10) continue;
                 if(!REevt_samePV->at(j)) continue;
@@ -149,6 +166,7 @@ class Process {
 
                 // if(REevt_fourMuMass->at(j) <= 57.5 || REevt_fourMuMass->at(j) > 67.5) continue;
                 if((JpsiLV1 + JpsiLV2).M() < 7.5) continue;
+                if(labelsSwapped) randomizedSelectedSwaps++;
                 evt_mass.push_back((JpsiLV1 + JpsiLV2).M());
                 evt_mass2.push_back(REevt_fourMuMass->at(j));
 
@@ -208,7 +226,12 @@ class Process {
     }
 
     public:
+    Process(bool symmetrize=true, unsigned int seed=50)
+        : symmetrizeJpsiLabels(symmetrize), symmetrizationSeed(seed) {}
     int totEvent = 0, hltEvent = 0, vtxEvent = 0, totEntry = 0;
+    long long randomizationDraws = 0;
+    long long randomizedCandidateSwaps = 0;
+    long long randomizedSelectedSwaps = 0;
     // vector<vector<Double_t>> mu_pt;
     vector<Double_t> Jpsi_mass1, Jpsi_ctau1, Jpsi_pt1, Jpsi_y1, Jpsi_Z1;//, Jpsi_sigLxy, Jpsi_eta, Jpsi_phi;
     vector<Double_t> Jpsi_mass2, Jpsi_ctau2, Jpsi_pt2, Jpsi_y2;//, psi2S_sigLxy, psi2S_eta, psi2S_phi;
@@ -217,8 +240,8 @@ class Process {
     void readMatrix() {
         string line;
         // Save acc&eff in arrays
-        ifstream accFile("acceptance_sps_full10_v1.txt");
-        if(!accFile.is_open()) return;
+        ifstream accFile(acceptanceFileName.c_str());
+        if(!accFile.is_open()) throw runtime_error("Cannot open acceptance table: " + acceptanceFileName);
         int acc_ptBin = 0, acc_yBin = 0, lineCnt = 0;
         while(getline(accFile, line)) {
             istringstream iss(line);
@@ -247,8 +270,8 @@ class Process {
             lineCnt++;
         }
         accFile.close();
-        ifstream effFile("efficiency_sps0p8_dps0p2_dedup60_v1.txt");
-        if(!effFile.is_open()) return;
+        ifstream effFile(efficiencyFileName.c_str());
+        if(!effFile.is_open()) throw runtime_error("Cannot open efficiency table: " + efficiencyFileName);
         int eff_ptBin = 0, eff_yBin = 0;
         lineCnt = 0;
         while(getline(effFile, line)) {
@@ -288,20 +311,26 @@ class Process {
         return;
     }
     void loopOn() {
-        for(int i = 0; i < N_DIR; i++) {
-            for(int j = 1; j <= suffix[i]; j++) {
-                string fileName = infix + prefix[i] + "_" + to_string(j) + ".root";
-                // string dir = "/eos/home-c/chensh/Data2018/A/Charmonium/2018A_Ntuple_chensh_v1/251210_052421/0000";
-                // string fileName = dir + infix + prefix[i] + "_" + to_string(j) + ".root";
-                // string fileName = prefix[i] + infix + subinfix[i] + "_" + to_string(j) + ".root";// For Bdecay
-                readTree(fileName);
-            }
+        ifstream manifest(inputManifest.c_str());
+        if(!manifest.is_open()) throw runtime_error("Cannot open data ntuple manifest: " + inputManifest);
+        vector<string> inputFiles;
+        string fileName;
+        while(getline(manifest, fileName)) {
+            if(fileName.empty() || fileName[0] == '#') continue;
+            if(find(inputFiles.begin(), inputFiles.end(), fileName) != inputFiles.end())
+                throw runtime_error("Duplicate data ntuple in manifest: " + fileName);
+            inputFiles.push_back(fileName);
         }
+        if((int)inputFiles.size() != expectedInputFiles)
+            throw runtime_error("Data ntuple manifest contains " + to_string(inputFiles.size()) +
+                " files; expected " + to_string(expectedInputFiles));
+        for(const string& inputFile : inputFiles) readTree(inputFile);
+        cout<<"Validated data ntuple files: "<<inputFiles.size()<<endl;
     }
 };
 
-void rephrase() {
-    Process process;
+void rephrase(bool symmetrizeJpsiLabels=true, unsigned int symmetrizationSeed=50) {
+    Process process(symmetrizeJpsiLabels, symmetrizationSeed);
     process.readMatrix();
     process.loopOn();
     TFile file(outFile.c_str(), "RECREATE");
@@ -380,5 +409,12 @@ void rephrase() {
     cout<<"Valid fourmu vertex event number: "<<process.vtxEvent<<endl;
     cout<<"Total entry number: "<<process.totEntry<<endl;
     cout<<"maxEvt_weight = "<<maxEvt_weight<<endl;
+    cout<<"Jpsi label randomization: "<<
+        (symmetrizeJpsiLabels ? "enabled" : "disabled")<<endl;
+    cout<<"Jpsi label randomization seed: "<<symmetrizationSeed<<endl;
+    cout<<"Randomization draws after HLT+trigger matching: "<<
+        process.randomizationDraws<<endl;
+    cout<<"Randomized candidate swaps: "<<process.randomizedCandidateSwaps<<endl;
+    cout<<"Randomized selected-event swaps: "<<process.randomizedSelectedSwaps<<endl;
     return;
 }
