@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -62,6 +63,8 @@ struct FitCell {
     double minNll = std::numeric_limits<double>::quiet_NaN();
     int attempts = 0;
     bool accepted = false;
+    bool combCombFixedZero = false;
+    bool sigCombFixedZero = false;
 };
 
 std::string makeCut(double dyLow, double dyHigh, double dphiLow,
@@ -157,13 +160,66 @@ FitCell fitCell(TTree &tree, const FitCell &definition,
         globalExpected > 0 ? out.sumWeights / globalExpected : 0.05;
 
     double bestScore = std::numeric_limits<double>::infinity();
+    bool combCombBoundaryFallback = false;
+    bool sigCombBoundaryFallback = false;
     for (int attempt = 0; attempt < 6; ++attempt) {
         configureYields(*workspace, scale, attempt);
-        std::unique_ptr<RooFitResult> result(pdf->fitTo(
-            *fitData, Extended(true), Save(true), AsymptoticError(true), Offset(true),
-            PrintLevel(-1), Strategy(1), Optimize(false),
-            Minimizer("Minuit2", "migrad")));
+        RooRealVar *combComb = workspace->var("n_Comb_Comb");
+        RooRealVar *sigComb = workspace->var("n_Sig_Comb");
+        if (combCombBoundaryFallback && combComb) {
+            combComb->setVal(0.0);
+            combComb->setConstant(true);
+        }
+        if (sigCombBoundaryFallback && sigComb) {
+            sigComb->setVal(0.0);
+            sigComb->setConstant(true);
+        }
+        std::unique_ptr<RooFitResult> result;
         ++out.attempts;
+        try {
+            result.reset(pdf->fitTo(
+                *fitData, Extended(true), Save(true), AsymptoticError(true),
+                Offset(true), PrintLevel(-1), Strategy(1), Optimize(false),
+                Minimizer("Minuit2", "migrad")));
+        } catch (const std::exception &error) {
+            const std::string message = error.what();
+            const bool explicitCombCombBoundary =
+                message.find("outside the default range") != std::string::npos &&
+                message.find("n_Comb_Comb") != std::string::npos;
+            if (!combCombBoundaryFallback && combComb &&
+                explicitCombCombBoundary) {
+                combComb->setVal(0.0);
+                combComb->setConstant(true);
+                combCombBoundaryFallback = true;
+                std::cerr
+                    << "Activating approved boundary fallback: fixing "
+                    << "n_Comb_Comb=0 before the corrected-covariance refit"
+                    << std::endl;
+                continue;
+            }
+            const bool explicitSigCombBoundary =
+                message.find("outside the default range") != std::string::npos &&
+                message.find("n_Sig_Comb") != std::string::npos;
+            if (!sigCombBoundaryFallback && sigComb &&
+                explicitSigCombBoundary) {
+                sigComb->setVal(0.0);
+                sigComb->setConstant(true);
+                sigCombBoundaryFallback = true;
+                std::cerr
+                    << "Activating approved boundary fallback: fixing shared "
+                    << "n_Sig_Comb=0 (Sig_Comb and Comb_Sig) before the "
+                    << "corrected-covariance refit" << std::endl;
+                continue;
+            }
+            const bool explicitOtherBoundary =
+                message.find("outside the default range") != std::string::npos;
+            if (explicitOtherBoundary) {
+                std::cerr << "Rejecting deterministic start after non-approved "
+                          << "yield-boundary exception: " << message << std::endl;
+                continue;
+            }
+            throw;
+        }
         if (!result)
             continue;
         const double score =
@@ -196,7 +252,25 @@ FitCell fitCell(TTree &tree, const FitCell &definition,
             break;
         }
     }
+    out.combCombFixedZero = combCombBoundaryFallback;
+    out.sigCombFixedZero = sigCombBoundaryFallback;
     return out;
+}
+
+std::vector<double> makeDyEdges(bool singleControlCell,
+                                double controlDyMin) {
+    std::vector<double> edges = kDyEdges;
+    if (!singleControlCell ||
+        !(controlDyMin > edges.front() && controlDyMin < edges.back()))
+        return edges;
+    const bool alreadyPresent =
+        std::any_of(edges.begin(), edges.end(), [controlDyMin](double edge) {
+            return std::abs(edge - controlDyMin) < 1e-12;
+        });
+    if (!alreadyPresent)
+        edges.insert(std::upper_bound(edges.begin(), edges.end(), controlDyMin),
+                     controlDyMin);
+    return edges;
 }
 
 std::vector<FitCell> makeCells(bool singleControlCell,
@@ -205,8 +279,10 @@ std::vector<FitCell> makeCells(bool singleControlCell,
                                double controlDyMin,
                                double controlPhiMax) {
     std::vector<FitCell> cells;
+    const std::vector<double> dyEdges =
+        makeDyEdges(singleControlCell, controlDyMin);
     if (!singleControlCell) {
-        for (int iy = 0; iy + 1 < static_cast<int>(kDyEdges.size()); ++iy) {
+        for (int iy = 0; iy + 1 < static_cast<int>(dyEdges.size()); ++iy) {
             for (int iphi = 0;
                  iphi + 1 < static_cast<int>(kDphiEdges.size()); ++iphi) {
                 if (iy == 3 && iphi == 2)
@@ -214,8 +290,8 @@ std::vector<FitCell> makeCells(bool singleControlCell,
                 FitCell cell;
                 cell.iy = iy;
                 cell.iphi = iphi;
-                cell.dyLow = kDyEdges[iy];
-                cell.dyHigh = kDyEdges[iy + 1];
+                cell.dyLow = dyEdges[iy];
+                cell.dyHigh = dyEdges[iy + 1];
                 cell.dphiLow = kDphiEdges[iphi];
                 cell.dphiHigh =
                     (iy == 3 && iphi == 1) ? kPi : kDphiEdges[iphi + 1];
@@ -228,8 +304,8 @@ std::vector<FitCell> makeCells(bool singleControlCell,
     std::vector<double> dphiEdges = {0.0, controlPhiMax,
                                      3.0 * kPi / 4.0, kPi};
     int controlDyIndex = -1;
-    for (int iy = 0; iy + 1 < static_cast<int>(kDyEdges.size()); ++iy) {
-        if (std::abs(kDyEdges[iy] - controlDyMin) < 1e-12) {
+    for (int iy = 0; iy + 1 < static_cast<int>(dyEdges.size()); ++iy) {
+        if (std::abs(dyEdges[iy] - controlDyMin) < 1e-12) {
             controlDyIndex = iy;
             break;
         }
@@ -248,8 +324,8 @@ std::vector<FitCell> makeCells(bool singleControlCell,
             FitCell cell;
             cell.iy = iy;
             cell.iphi = iphi;
-            cell.dyLow = kDyEdges[iy];
-            cell.dyHigh = kDyEdges[iy + 1];
+            cell.dyLow = dyEdges[iy];
+            cell.dyHigh = dyEdges[iy + 1];
             cell.dphiLow = dphiEdges[iphi];
             cell.dphiHigh = dphiEdges[iphi + 1];
             cells.push_back(cell);
@@ -259,7 +335,7 @@ std::vector<FitCell> makeCells(bool singleControlCell,
     // The nominal assumption is that this entire region is DPS, so extract one
     // prompt-prompt yield for the full control region.
     FitCell control;
-    control.iy = 3;
+    control.iy = controlDyIndex;
     control.iphi = 0;
     control.dyLow = controlDyMin;
     control.dyHigh = 4.0;
@@ -286,13 +362,13 @@ std::vector<FitCell> makeCells(bool singleControlCell,
     // Retain dy=2.4 in the high-dphi region.  The 14-cell validation keeps
     // both dphi slices; the lower-statistics 12-cell validation merges them.
     for (int iy = controlDyIndex;
-         iy + 1 < static_cast<int>(kDyEdges.size()); ++iy) {
+         iy + 1 < static_cast<int>(dyEdges.size()); ++iy) {
         if (mergeHighDphiRows) {
             FitCell cell;
             cell.iy = iy;
             cell.iphi = 1;
-            cell.dyLow = kDyEdges[iy];
-            cell.dyHigh = kDyEdges[iy + 1];
+            cell.dyLow = dyEdges[iy];
+            cell.dyHigh = dyEdges[iy + 1];
             cell.dphiLow = controlPhiMax;
             cell.dphiHigh = kPi;
             cells.push_back(cell);
@@ -302,8 +378,8 @@ std::vector<FitCell> makeCells(bool singleControlCell,
             FitCell cell;
             cell.iy = iy;
             cell.iphi = iphi;
-            cell.dyLow = kDyEdges[iy];
-            cell.dyHigh = kDyEdges[iy + 1];
+            cell.dyLow = dyEdges[iy];
+            cell.dyHigh = dyEdges[iy + 1];
             cell.dphiLow = dphiEdges[iphi];
             cell.dphiHigh = dphiEdges[iphi + 1];
             cells.push_back(cell);
@@ -364,21 +440,23 @@ void fit_pp_2d_adaptive(
         return;
     }
 
+    const std::vector<double> mapDyEdges =
+        makeDyEdges(singleControlCell, controlDyMin);
     TH2D yieldMap("h_data_pp_dy_dphi",
                   "corrected prompt-prompt yield;|#Delta y|;|#Delta#phi|",
-                  kDyEdges.size() - 1, kDyEdges.data(),
+                  mapDyEdges.size() - 1, mapDyEdges.data(),
                   kDphiEdges.size() - 1, kDphiEdges.data());
     TH2D rawMap("h_data_raw_entries_dy_dphi",
                 "raw selected entries;|#Delta y|;|#Delta#phi|",
-                kDyEdges.size() - 1, kDyEdges.data(),
+                mapDyEdges.size() - 1, mapDyEdges.data(),
                 kDphiEdges.size() - 1, kDphiEdges.data());
     TH2D statusMap("h_fit_status_dy_dphi",
                    "fit status;|#Delta y|;|#Delta#phi|",
-                   kDyEdges.size() - 1, kDyEdges.data(),
+                   mapDyEdges.size() - 1, mapDyEdges.data(),
                    kDphiEdges.size() - 1, kDphiEdges.data());
     TH2D covMap("h_fit_covqual_dy_dphi",
                 "fit covariance quality;|#Delta y|;|#Delta#phi|",
-                kDyEdges.size() - 1, kDyEdges.data(),
+                  mapDyEdges.size() - 1, mapDyEdges.data(),
                 kDphiEdges.size() - 1, kDphiEdges.data());
 
     const std::vector<FitCell> definitions =
@@ -408,7 +486,11 @@ void fit_pp_2d_adaptive(
                       << " status=" << cell.status
                       << " covQual=" << cell.covQual
                       << " edm=" << cell.edm
-                      << " attempts=" << cell.attempts << std::endl;
+                      << " attempts=" << cell.attempts
+                      << " combCombFixedZero="
+                      << (cell.combCombFixedZero ? 1 : 0)
+                      << " sigCombFixedZero="
+                      << (cell.sigCombFixedZero ? 1 : 0) << std::endl;
     }
 
     const std::string base(outputDir);
@@ -463,7 +545,8 @@ void fit_pp_2d_adaptive(
     csv << "iy,iphi,dy_low,dy_high,dphi_low,dphi_high,tree_entries,"
            "fit_entries,sum_weights,sum_weights2,effective_entries,pp_yield,"
            "pp_error,status,covQual,edm,minNll,attempts,accepted,p_np_yield,"
-           "np_np_yield,sig_comb_yield,comb_comb_yield\n";
+           "np_np_yield,sig_comb_yield,comb_comb_yield,"
+           "comb_comb_fixed_zero,sig_comb_fixed_zero\n";
     csv << std::setprecision(12);
     for (const FitCell &c : cells)
         csv << c.iy << "," << c.iphi << "," << c.dyLow << ","
@@ -474,11 +557,18 @@ void fit_pp_2d_adaptive(
             << c.covQual << "," << c.edm << "," << c.minNll << ","
             << c.attempts << "," << (c.accepted ? 1 : 0) << ","
             << c.pNpYield << "," << c.npNpYield << "," << c.sigCombYield
-            << "," << c.combCombYield << "\n";
+            << "," << c.combCombYield << ","
+            << (c.combCombFixedZero ? 1 : 0) << ","
+            << (c.sigCombFixedZero ? 1 : 0) << "\n";
 
     int accepted = 0;
-    for (const FitCell &c : cells)
+    int combCombFixedZero = 0;
+    int sigCombFixedZero = 0;
+    for (const FitCell &c : cells) {
         accepted += c.accepted;
+        combCombFixedZero += c.combCombFixedZero;
+        sigCombFixedZero += c.sigCombFixedZero;
+    }
     std::ofstream summary(base + "/summary.txt");
     summary << "input=" << dataPath << "\n"
             << "model=" << modelPath << "\n"
@@ -493,6 +583,10 @@ void fit_pp_2d_adaptive(
             << "control_phi_max=" << controlPhiMax << "\n"
             << "acceptance_criterion=status==0 && covQual>=2 && edm<0.01\n"
             << "error_convention=ROOT_native_AsymptoticError_true\n"
+            << "comb_comb_boundary_strategy=fix_zero_and_refit_on_root_range_exception\n"
+            << "comb_comb_fixed_zero_fits=" << combCombFixedZero << "\n"
+            << "sig_comb_boundary_strategy=fix_shared_zero_for_Sig_Comb_and_Comb_Sig_and_refit_on_root_range_exception\n"
+            << "sig_comb_fixed_zero_fits=" << sigCombFixedZero << "\n"
             << "likelihood_offset=true\n";
     if (!singleControlCell) {
         drawMap(yieldMap, base + "/pp_yield_map.pdf",

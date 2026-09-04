@@ -39,10 +39,15 @@ void build_crossslot_splot_mixed(
     const char *input2=
         "Data_driven/results/route9p3_crossslot_splot/jpsi2_sweights.root",
     const char *output=
-        "Data_driven/results/route9p3_crossslot_allpairs/mixed_dps_allpairs.root") {
+        "Data_driven/results/route9p3_crossslot_allpairs/mixed_dps_allpairs.root",
+    const char *acceptancePath=kAccFile,
+    const char *efficiencyPath=kEffFile) {
   const auto pool1=loadSlot(input1,1),pool2=loadSlot(input2,2);
   if (pool1.empty()||pool2.empty()) { std::cerr << "Missing slot candidate pool\n"; return; }
-  Correction correction; if (!correction.load()) { std::cerr << "Cannot load correction tables\n"; return; }
+  Correction correction;
+  if (!correction.load(acceptancePath,efficiencyPath)) {
+    std::cerr << "Cannot load correction tables\n"; return;
+  }
   TString outDir=gSystem->DirName(output); gSystem->mkdir(outDir,true);
   TFile fo(output,"RECREATE"); TTree tree("mix","cross-event Jpsi1 x Jpsi2 prompt-sWeighted pairs");
   ULong64_t run1,lumi1,event1,run2,lumi2,event2;

@@ -111,7 +111,8 @@ void build_2d_templates_adaptive(
     const char *mixedInput =
         "Data_driven/results/mixed_dps_5M_seed20260728.root",
     double controlDyMin = 1.8, double controlPhiMax = pi / 2,
-    double spsLeakageFraction = 0.0, bool allowSignedWeights = false) {
+    double spsLeakageFraction = 0.0, bool allowSignedWeights = false,
+    const char *dpsTemplateSource = "event_mixing") {
   gSystem->mkdir(outdir, true);
   auto cells = read(fitInput);
   if (cells.empty()) {
@@ -256,7 +257,10 @@ void build_2d_templates_adaptive(
   }
   std::ofstream o(base + "/summary.txt");
   o << std::setprecision(12) << "cells=" << cells.size()
-    << "\nfit_input=" << fitInput << "\nmixed_input=" << mixedInput
+    << "\nfit_input=" << fitInput
+    << "\ndps_template_source=" << dpsTemplateSource
+    << "\ntemplate_input=" << mixedInput
+    << "\nmixed_input=" << mixedInput
     << "\nmixed_pairs="
     << used
     << "\ncontrol_dy_min=" << controlDyMin
@@ -284,12 +288,21 @@ void build_2d_templates_adaptive(
     significances.push_back(significance(c));
     noErrors.push_back(0);
   }
+  const std::string adaptiveCellsLabel =
+      "adaptive " + std::to_string(cells.size()) + " cells";
+  const std::string dataMapTitle =
+      "Data prompt-prompt fitted yield: " + adaptiveCellsLabel;
+  const std::string significanceMapTitle =
+      "SPS significance: " + adaptiveCellsLabel;
+  const std::string dpsMapTitle =
+      std::string(dpsTemplateSource) == "dps_reconstruction_mc"
+          ? "Control-region normalized DPS MC yield"
+          : "Control-region normalized event-mixing DPS yield";
   draw(hd, cells, base + "/pp_yield_map.pdf",
-       "Data prompt-prompt fitted yield: adaptive 14 cells", dataValues,
+       dataMapTitle.c_str(), dataValues,
        dataErrors, true, "%.1f");
   draw(hp, cells, base + "/dps_normalized_map.pdf",
-       "Control-region normalized mixed-DPS yield", dpsValues, dpsErrors,
-       true, "%.1f");
+       dpsMapTitle.c_str(), dpsValues, dpsErrors, true, "%.1f");
   draw(hs, cells, base + "/sps_data_driven_map.pdf",
        "Data-driven SPS yield: Data PP - normalized DPS", spsValues,
        spsErrors, true, "%.1f");
@@ -300,15 +313,17 @@ void build_2d_templates_adaptive(
        "SPS component weight (central value only)", spsWeights, noErrors,
        false, "%.3f");
   draw(hz, cells, base + "/sps_significance_map.pdf",
-       "SPS significance: adaptive 14 cells", significances, noErrors, false,
+       significanceMapTitle.c_str(), significances, noErrors, false,
        "%.2f");
   std::ofstream meta(base + "/metadata.txt");
   meta << std::setprecision(12)
        << "artifact=adaptive_2d_SPS_DPS_template_decomposition\n"
        << "status=generated_analysis_artifact\n"
        << "pp_data_selection=defined_by_fit_input\n"
-       << "dps_template_construction=defined_by_mixed_input\n"
-       << "binning=adaptive_14_cells_abs_delta_y_vs_abs_delta_phi\n"
+       << "dps_template_source=" << dpsTemplateSource << "\n"
+       << "dps_template_construction=defined_by_template_input\n"
+       << "binning=adaptive_" << cells.size()
+       << "_cells_abs_delta_y_vs_abs_delta_phi\n"
        << "control_dy_min=" << controlDyMin << "\n"
        << "control_phi_max=" << controlPhiMax << "\n"
        << "sps_leakage_fraction=" << spsLeakageFraction << "\n"
@@ -326,6 +341,7 @@ void build_2d_templates_adaptive(
           "metadata_and_producer_package\n"
        << "generator=Data_driven/build_2d_templates_adaptive.cpp\n"
        << "fit_input=" << fitInput << "\n"
+       << "template_input=" << mixedInput << "\n"
        << "mixed_input=" << mixedInput << "\n"
        << "allow_signed_weights=" << allowSignedWeights << "\n"
        << "git_commit=" << gSystem->GetFromPipe("git rev-parse HEAD").Data()

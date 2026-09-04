@@ -1,0 +1,41 @@
+{
+  "central_pb": 43.7543988211584,
+  "stat_pb": 2.26165747225974,
+  "reported_syst_pb": 3.78113816809554,
+  "systematic_sources_relative": {
+    "branching_fraction": {
+      "relative": 0.011,
+      "label": "Branching fraction"
+    },
+    "cms_luminosity": {
+      "relative": 0.012,
+      "label": "CMS integrated luminosity"
+    },
+    "acceptance_efficiency": {
+      "relative": 0.0847164328648008,
+      "label": "Acceptance and efficiency correction"
+    },
+    "lifetime_variable": {
+      "relative": 0.003,
+      "label": "Lifetime variable"
+    },
+    "fitter_stability": {
+      "relative": 0.00413283432144742,
+      "label": "ROOT 6.40 nominal/reference fitter shift"
+    }
+  },
+  "systematic_combination": "Use the five accepted Data total-row relative sources and combine them in quadrature.",
+  "reconstructed_relative_systematic": 0.0864173264852879,
+  "reconstructed_absolute_systematic_pb": 3.78113816809554,
+  "phase_space": "prompt Jpsi pair; each Jpsi 10<=pT<=40 GeV and abs(y)<2.0; m(JJ)>=7.5 GeV",
+  "visible_convention": "physical pair cross section after division by B(Jpsi->mumu)^2",
+  "source": "accepted new-data ROOT 6.40.02 differential/cross-section campaign total row",
+  "source_files": [
+    "Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/fit_results/newdata167_accmix23_effmix19_lumi36p684_root640_diff35_v1_20260902/cross_sections.csv",
+    "Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/fit_results/newdata167_accmix23_effmix19_lumi36p684_root640_diff35_v1_20260902/run.metadata.txt",
+    "Data/docs/handoff.md"
+  ],
+  "source_cross_sections_sha256": "df855ea5c4f68ffa5e311f05b200a3908b0eaa7a34e8bdc31c1835936bd4b3cb",
+  "source_metadata_sha256": "5dd41caeb27fb0fdc4a9110d77dc35731888cb44105d1b7175e9268bef8213df",
+  "status": "accepted_nominal_user_confirmed"
+}

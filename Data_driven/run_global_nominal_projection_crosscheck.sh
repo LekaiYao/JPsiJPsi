@@ -100,8 +100,12 @@ test "${ROWS}" -eq 4
   echo "projection_binning=delta_y6_delta_phi8_evt_mass7_evt_y5"
   echo "signal_extraction=per_bin_4D_PP_fit_for_total_SPS_weighted_DPS_weighted_data"
   echo "template_fit=two_fixed_unit_normalized_SPS_DPS_shapes_to_total_PP_yields"
+  echo "component_worker_execution=parallel_interpreted_macro_no_aclic"
+  echo "parallel_workers=6"
   echo "systematic_included=false"
-  sha256sum Data_driven/build_component_trees.cpp \
+  sha256sum Data_driven/run_global_nominal_projection_crosscheck.sh \
+    Data_driven/run_component_fit_worker.sh \
+    Data_driven/build_component_trees.cpp \
     Data_driven/fit_component_variables.cpp \
     Data_driven/summarize_component_fits.cpp \
     Data_driven/fit_1d_component_templates.cpp

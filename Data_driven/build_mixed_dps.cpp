@@ -58,8 +58,10 @@ int findBin(const std::vector<double> &edges, double value) {
 
 class Correction {
   public:
-    bool load() {
-        return loadAcceptance(kAccFile) && loadEfficiency(kEffFile);
+    bool load(const char *acceptancePath = kAccFile,
+              const char *efficiencyPath = kEffFile) {
+        return loadAcceptance(acceptancePath) &&
+               loadEfficiency(efficiencyPath);
     }
 
     double weight(const Jpsi &a, const Jpsi &b) const {
@@ -96,8 +98,11 @@ class Correction {
     bool loadAcceptance(const std::string &path) {
         std::ifstream in(path);
         int nPt = 0, nY = 0;
-        double ignored1 = 0, ignored2 = 0;
-        if (!(in >> nPt >> nY >> ignored1 >> ignored2))
+        std::string header;
+        if (!std::getline(in, header))
+            return false;
+        std::istringstream headerStream(header);
+        if (!(headerStream >> nPt >> nY))
             return false;
         accPt_.resize(nPt + 1);
         accY_.resize(nY + 1);
@@ -210,7 +215,9 @@ std::vector<PoolEvent> buildPool(TChain &chain) {
 void build_mixed_dps(Long64_t requested = 100000,
                      ULong64_t seed = 20260728,
                      const char *output =
-                         "Data_driven/results/mixed_dps.root") {
+                         "Data_driven/results/mixed_dps.root",
+                     const char *acceptancePath = kAccFile,
+                     const char *efficiencyPath = kEffFile) {
     TChain chain("rootuple/oniaTree");
     addNominalData(chain);
     if (chain.GetNtrees() != 119) {
@@ -224,7 +231,7 @@ void build_mixed_dps(Long64_t requested = 100000,
         return;
     }
     Correction correction;
-    if (!correction.load()) {
+    if (!correction.load(acceptancePath, efficiencyPath)) {
         std::cerr << "Cannot read nominal correction tables." << std::endl;
         return;
     }
