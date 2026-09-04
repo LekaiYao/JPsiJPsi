@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "sps_acceptance_table": {
+    "path": "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/acceptance_sps_full10_v1.txt",
+    "sha256": "0313a2374fd974db331ce55db3958f14ddcaba6279a8cc361a40f11390e8afa6",
+    "header": "19 10 150118 49747"
+  },
+  "dps_acceptance_table": {
+    "path": "/eos/home-l/leyao/26JJ/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/plot/acceptance.txt",
+    "sha256": "60efbc670c4c54696a750fb41b910eba58c6aecb5e45a6590d5d77e8fcfd7992"
+  },
+  "acceptance_mixing": {
+    "sps_fraction": 0.8,
+    "dps_fraction": 0.2,
+    "normalization": "normalize each raw numerator/denominator map by its summed per-Jpsi denominator before count-level mixing"
+  },
+  "mixed_efficiency_table": {
+    "path": "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/efficiency_sps0p8_dps0p2_dedup60_v1.txt",
+    "sha256": "3d8c72cf35f6704f570c64fb2d4d2b8df6c6bcd83ed301fd9a94dd1c90a23fd6"
+  },
+  "dps_gen": {
+    "tree": "GenAnalyzer/gen_tree",
+    "slot_branch": "GEN_pair_id",
+    "files": [
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_1.root", "size": 20499800, "sha256": "057fd1dc3af13e50212b4cc3e359545d5cd192b1d106bd8f9caad44e122af04a"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_2.root", "size": 20419643, "sha256": "dddbc72499026ae3da95c5139a2f4fd7e51c04b8c0a2c52a1eb913ac16d9f95a"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_3.root", "size": 20446768, "sha256": "1ccdd85a79e0caea419e974d732819636047227e6cd29705768382ca2fd9017b"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_4.root", "size": 20346121, "sha256": "7acaa495d44e8412bb711c8ee6a4ecb8b6ad12b0762642a622e189fbae085f92"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_5.root", "size": 20420992, "sha256": "c7ef903f8ff7404dd5654fd531d4194340cddaaf3e1ac78cecdc1261430a2dd6"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_6.root", "size": 20527599, "sha256": "6750c2d40211e68ddd13eec8a91e9e17f2aed0c88e3be8ed5ac12f14d365118f"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_7.root", "size": 20403283, "sha256": "b168f0cb734c5626c7dadf49ccf19b5a3a9498de6dc86f423774dae986448ea4"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_8.root", "size": 20457829, "sha256": "9d0a70131bf570d476fdb9e9196775d914f975085f68af9f02f78d6253bc8fa0"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_9.root", "size": 20439862, "sha256": "7506adee71f366b20a4e1acd3bdb7ee39e69225ee79c189cef3e77410c46e5c3"},
+      {"path": "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_10.root", "size": 20364886, "sha256": "a389623d1e7531d37a2492bcfe5e6a0f09837950485653870836b256502108e7"}
+    ]
+  },
+  "selection": {
+    "per_jpsi": "10<=pT<=40 GeV and abs(y)<=2",
+    "mixed_pair": "different source events and m(JJ)>=7.5 GeV",
+    "acceptance_numerator": "both muons of both Jpsi have pT>3.5 GeV and abs(eta)<2.4",
+    "mixing": "deterministic all cross-slot GEN_pair_id[0].first x GEN_pair_id[0].second"
+  }
+}

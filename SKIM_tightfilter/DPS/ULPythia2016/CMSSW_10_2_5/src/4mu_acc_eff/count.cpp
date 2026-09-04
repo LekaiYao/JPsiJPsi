@@ -1,14 +1,19 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
+#include <iomanip>
+#include <stdexcept>
 #include "TFile.h"
 #include "TChain.h"
 #include "TTree.h"
+#include "TLorentzVector.h"
 using namespace std;
 #define PI 3.14159265359
 
 void loadFile(vector<string>& filenames) {
     string prefix = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/DPS_ntuple/Ntuple_2016_DPS_";
-    for(int i = 1; i <= 65; i++) filenames.push_back(prefix + to_string(i) + ".root");
+    for(int i = 1; i <= 10; i++) filenames.push_back(prefix + to_string(i) + ".root");
+    for(int i = 16; i <= 65; i++) filenames.push_back(prefix + to_string(i) + ".root");
 }
 
 vector<Double_t> eff_pt, eff_y;
@@ -21,10 +26,10 @@ Double_t calWeight(Double_t Jpsi_pt1, Double_t Jpsi_y1, Double_t Jpsi_pt2, Doubl
     Double_t w = nBin_Jpsi[i][j] / nVtx_Jpsi[i][j] * nBin_Jpsi[k][l] / nVtx_Jpsi[k][l] * nVtx_evt[l][j] / nTrg_evt[l][j];
     return w;
 }
-void loadEff() {
+void loadEff(const string& efficiencyPath) {
     string line;
-    ifstream effFile("/eos/home-l/leyao/26JJ/JPsiJPsi/SKIM_tightfilter/SPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc_eff/txt/efficiency_0_0.6.txt");
-    if(!effFile.is_open()) return;
+    ifstream effFile(efficiencyPath);
+    if(!effFile.is_open()) throw runtime_error("Cannot open mixed efficiency table: " + efficiencyPath);
     int eff_ptBin = 0, eff_yBin = 0, lineCnt = 0;
     while(getline(effFile, line)) {
         istringstream iss(line);
@@ -64,7 +69,10 @@ void loadEff() {
     return;
 }
 
-void count() {
+void count(
+    const char* efficiencyPath = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/efficiency_sps0p8_dps0p2_dedup60_v1.txt"
+) {
+    cout<<setprecision(17);
     // Handle input files and construct TChain
     vector<string> filenames;
     loadFile(filenames);
@@ -74,7 +82,7 @@ void count() {
         ch->Add(filenames[i].c_str());
         cout<<". Done!"<<'\n';
     }
-    loadEff();
+    loadEff(efficiencyPath);
     // Define sub-regions
     int nVars = 5, nBins[] = {6, 8, 5, 9, 7};
     double *vars = new double[nVars];
@@ -172,7 +180,10 @@ void count() {
     cout<<"\nnPassAcc="<<nPassAcc<<"\nnMatchTrg="<<nMatchTrg<<"\ntotWeight="<<totWeight<<endl;
     for(int i = 0; i < nVars; i++) {
         cout<<varNames[i]<<": {";
-        for(int j = 0; j < nBins[i]; j++) cout<<(nCount[i][j] - nWeight[i][j]) / nWeight[i][j]<<", ";
+        for(int j = 0; j < nBins[i]; j++) {
+            if(nWeight[i][j] > 0) cout<<(nCount[i][j] - nWeight[i][j]) / nWeight[i][j]<<", ";
+            else cout<<'['<<nCount[i][j]<<"], ";
+        }
         cout<<'}'<<endl;
     }
     return;

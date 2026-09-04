@@ -1,8 +1,12 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
+#include <iomanip>
+#include <stdexcept>
 #include "TFile.h"
 #include "TChain.h"
 #include "TTree.h"
+#include "TLorentzVector.h"
 using namespace std;
 #define PI 3.14159265359
 
@@ -21,12 +25,12 @@ Double_t calWeight(Double_t Jpsi_pt1, Double_t Jpsi_y1, Double_t Jpsi_pt2, Doubl
     Double_t w = nGen_Jpsi[i][j] / nAcc_Jpsi[i][j] * nGen_Jpsi[k][l] / nAcc_Jpsi[k][l];
     return w;
 }
-void loadAcc(bool statis) {
+void loadAcc(const string& acceptancePath) {
     string line;
     // Save acc in arrays
     // ifstream accFile("acceptance_SPS+2DPS.txt");
-    ifstream accFile("/eos/home-l/leyao/26JJ/JPsiJPsi/GEN_nofilter/SPS/CMSSW_10_2_5/src/4mu_acc/plot/acceptance.txt");
-    if(!accFile.is_open()) return;
+    ifstream accFile(acceptancePath);
+    if(!accFile.is_open()) throw runtime_error("Cannot open SPS acceptance table: " + acceptancePath);
     int acc_ptBin = 0, acc_yBin = 0, lineCnt = 0;
     while(getline(accFile, line)) {
         istringstream iss(line);
@@ -58,7 +62,10 @@ void loadAcc(bool statis) {
     return;
 }
 
-void count() {
+void count(
+    const char* acceptancePath = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/acceptance_sps_full10_v1.txt"
+) {
+    cout<<setprecision(17);
     // Handle input files and construct TChain
     vector<string> filenames;
     loadFile(filenames);
@@ -68,7 +75,7 @@ void count() {
         ch->Add(filenames[i].c_str());
         cout<<". Done!"<<'\n';
     }
-    loadAcc(false);
+    loadAcc(acceptancePath);
     // Define sub-regions
     int nVars = 5, nBins[] = {6, 8, 5, 9, 7};
     double *vars = new double[nVars];

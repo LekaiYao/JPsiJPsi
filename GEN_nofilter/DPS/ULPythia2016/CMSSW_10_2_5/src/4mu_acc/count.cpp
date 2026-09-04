@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <iomanip>
+#include <stdexcept>
 #include <utility>
 #include "TFile.h"
 #include "TChain.h"
@@ -14,7 +16,17 @@ struct MixedJpsi {
     bool passAcc;
 };
 
-void loadFile(vector<string>& filenames) {
+void loadFile(vector<string>& filenames, const string& inputListPath) {
+    if(!inputListPath.empty()) {
+        ifstream inputList(inputListPath);
+        if(!inputList.is_open()) throw runtime_error("Cannot open DPS input list: " + inputListPath);
+        string path;
+        while(getline(inputList, path)) {
+            if(!path.empty() && path[0] != '#') filenames.push_back(path);
+        }
+        if(filenames.empty()) throw runtime_error("DPS input list is empty: " + inputListPath);
+        return;
+    }
     // GEN-only Pythia8 DPS samples (chensh open path; local direct/ is empty, read upstream directly)
     string prefix = "/eos/user/c/chensh/JPsiJPsi/GEN_nofilter/DPS/ULPythia2016/CMSSW_10_2_5/src/4mu_acc/direct/DPS_2016_JJ_";
     // string prefix = "direct/DPS_2016_JJ_";
@@ -34,13 +46,13 @@ Double_t calJpsiWeight(Double_t Jpsi_pt1, Double_t Jpsi_y1) {
     Double_t w = nGen_Jpsi[i][j] / nAcc_Jpsi[i][j];
     return w;
 }
-void loadAcc(bool statis) {
+void loadAcc(const string& acceptancePath) {
     string line;
     // Save acc in arrays
     // ifstream accFile("acceptance_SPS+2DPS.txt");
     // DPS closure uses the SPS acceptance map (same map as efficiency closure, tests model independence)
-    ifstream accFile("/eos/home-l/leyao/26JJ/JPsiJPsi/GEN_nofilter/SPS/CMSSW_10_2_5/src/4mu_acc/plot/acceptance.txt");
-    if(!accFile.is_open()) return;
+    ifstream accFile(acceptancePath);
+    if(!accFile.is_open()) throw runtime_error("Cannot open SPS acceptance table: " + acceptancePath);
     int acc_ptBin = 0, acc_yBin = 0, lineCnt = 0;
     while(getline(accFile, line)) {
         istringstream iss(line);
@@ -72,17 +84,21 @@ void loadAcc(bool statis) {
     return;
 }
 
-void count() {
+void count(
+    const char* acceptancePath = "/eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/acceptance_sps_full10_v1.txt",
+    const char* inputListPath = ""
+) {
+    cout<<setprecision(17);
     // Handle input files and construct TChain
     vector<string> filenames;
-    loadFile(filenames);
+    loadFile(filenames, inputListPath);
     TChain *ch = new TChain("GenAnalyzer/gen_tree");
     for(int i = 0; i < (int)filenames.size(); i++) {
         cout<<"Processing "<<(i + 1)<<"th file: "<<filenames[i];
         ch->Add(filenames[i].c_str());
         cout<<". Done!"<<'\n';
     }
-    loadAcc(false);
+    loadAcc(acceptancePath);
     // Define sub-regions
     int nVars = 5, nBins[] = {6, 8, 5, 9, 7};
     double *vars = new double[nVars];
