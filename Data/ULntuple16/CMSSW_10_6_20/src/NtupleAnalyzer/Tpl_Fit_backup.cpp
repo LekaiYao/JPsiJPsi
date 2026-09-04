@@ -35,7 +35,7 @@ void plot_temp(string varName, RooRealVar &var, RooDataHist *dh, RooDataHist *dh
     func_SPS.plotOn(frame, Normalization(coef_SPS.getVal()), LineColor(kBlue), LineStyle(kDashed), Name("SPS"));
     func_DPS.plotOn(frame, Normalization(coef_DPS.getVal()), LineColor(kRed), LineStyle(kDotted), Name("DPS"));
     TLegend *legend = new TLegend(.65, .60, .85, .85);
-    legend->AddEntry(frame->findObject("Data"), "RunII 2018", "L");
+    legend->AddEntry(frame->findObject("Data"), "RunII 2016", "L");
     legend->AddEntry(frame->findObject("All"), "Total p.d.f.", "L");
     legend->AddEntry(frame->findObject("SPS"), "SPS p.d.f.", "L");
     legend->AddEntry(frame->findObject("DPS"), "DPS p.d.f.", "L");

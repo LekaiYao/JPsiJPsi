@@ -184,7 +184,7 @@ void nopre_fit() {
     // pdf_all.plotOn(frame7, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
     // pdf_all.plotOn(frame7, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
     // TLegend *legend7 = new TLegend(.65, .60, .85, .85);
-    // legend7->AddEntry(frame7->findObject("Data"), "RunII 2018", "L");
+    // legend7->AddEntry(frame7->findObject("Data"), "RunII 2016", "L");
     // legend7->AddEntry(frame7->findObject("All"), "Total p.d.f.", "L");
     // legend7->AddEntry(frame7->findObject("P_P"), "prompt, prompt", "L");
     // legend7->AddEntry(frame7->findObject("P_NP"), "prompt, non-prompt", "L");
@@ -209,7 +209,7 @@ void nopre_fit() {
     // pdf_all.plotOn(frame8, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
     // pdf_all.plotOn(frame8, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
     // TLegend *legend8 = new TLegend(.65, .60, .85, .85);
-    // legend8->AddEntry(frame8->findObject("Data"), "RunII 2018", "L");
+    // legend8->AddEntry(frame8->findObject("Data"), "RunII 2016", "L");
     // legend8->AddEntry(frame8->findObject("All"), "Total p.d.f.", "L");
     // legend8->AddEntry(frame8->findObject("P_P"), "prompt, prompt", "L");
     // legend8->AddEntry(frame8->findObject("P_NP"), "prompt, non-prompt", "L");
@@ -234,7 +234,7 @@ void nopre_fit() {
     // pdf_all.plotOn(frame9, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
     // pdf_all.plotOn(frame9, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
     // TLegend *legend9 = new TLegend(.65, .60, .85, .85);
-    // legend9->AddEntry(frame9->findObject("Data"), "RunII 2018", "L");
+    // legend9->AddEntry(frame9->findObject("Data"), "RunII 2016", "L");
     // legend9->AddEntry(frame9->findObject("All"), "Total p.d.f.", "L");
     // legend9->AddEntry(frame9->findObject("P_P"), "prompt, prompt", "L");
     // legend9->AddEntry(frame9->findObject("P_NP"), "prompt, non-prompt", "L");
@@ -261,7 +261,7 @@ void nopre_fit() {
     // pdf_all.plotOn(frame0, Components(pdf_Comb_Sig), LineColor(kGreen), LineWidth(1), Name("Comb_Sig"));
     // pdf_all.plotOn(frame0, Components(pdf_Comb_Comb), LineColor(kMagenta), LineWidth(1), Name("Comb_Comb"));
     // TLegend *legend0 = new TLegend(.65, .60, .85, .85);
-    // legend0->AddEntry(frame0->findObject("Data"), "RunII 2018", "L");
+    // legend0->AddEntry(frame0->findObject("Data"), "RunII 2016", "L");
     // legend0->AddEntry(frame0->findObject("All"), "Total p.d.f.", "L");
     // legend0->AddEntry(frame0->findObject("P_P"), "prompt, prompt", "L");
     // legend0->AddEntry(frame0->findObject("P_NP"), "prompt, non-prompt", "L");
