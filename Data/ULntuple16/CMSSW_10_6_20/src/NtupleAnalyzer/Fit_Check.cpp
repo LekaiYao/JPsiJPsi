@@ -8,6 +8,7 @@
 #include "TRandom3.h"
 #include "TSystem.h"
 #include "TTree.h"
+#include "Math/Integrator.h"
 #include "RooAbsPdf.h"
 #include "RooAbsReal.h"
 #include "RooAddPdf.h"
@@ -38,7 +39,7 @@ using namespace std;
 
 namespace {
 
-const int kMaximumFitAttempts = 3;
+const int kMaximumFitAttempts = 4;
 const double kBoundarySigmaTolerance = 0.1;
 
 struct ObservedEvent {
@@ -60,22 +61,68 @@ struct Chi2Result {
     vector<double> expected;
 };
 
-struct NumericalCdf {
+struct MarginalIntegral {
     unique_ptr<RooAbsPdf> marginal;
     RooRealVar *variable;
-    vector<double> grid;
-    vector<double> cumulative;
+    double fullIntegral = std::numeric_limits<double>::quiet_NaN();
 
-    double value(double coordinate) const {
-        if(coordinate <= grid.front()) return 0.0;
-        if(coordinate >= grid.back()) return 1.0;
-        auto upper = std::upper_bound(grid.begin(), grid.end(), coordinate);
-        const int highIndex = static_cast<int>(upper - grid.begin());
-        const int lowIndex = highIndex - 1;
-        const double fraction = (coordinate - grid[lowIndex]) /
-            (grid[highIndex] - grid[lowIndex]);
-        return cumulative[lowIndex] + fraction *
-            (cumulative[highIndex] - cumulative[lowIndex]);
+    double rawIntegral(double low, double high) {
+        const double previous = variable->getVal();
+        RooArgSet normalization(*variable);
+        auto density = [&](double coordinate) {
+            variable->setVal(coordinate);
+            const double value = marginal->getVal(&normalization);
+            if(!std::isfinite(value) || value < 0.0) {
+                throw runtime_error("A marginal-PDF integration point is invalid");
+            }
+            return value;
+        };
+        try {
+            ROOT::Math::IntegratorOneDim integrator(
+                density, ROOT::Math::IntegrationOneDim::kADAPTIVESINGULAR,
+                1e-10, 1e-9, 100000);
+            const double value = integrator.Integral(low, high);
+            const double error = integrator.Error();
+            const int status = integrator.Status();
+            variable->setVal(previous);
+            if(status != 0 || !std::isfinite(value) || value <= 0.0 ||
+               !std::isfinite(error)) {
+                ostringstream message;
+                message << "Adaptive marginal-PDF integration failed for "
+                    << variable->GetName() << " on [" << low << "," << high
+                    << "]: status=" << status << ", value=" << value
+                    << ", error=" << error;
+                throw runtime_error(message.str());
+            }
+            return value;
+        } catch(...) {
+            variable->setVal(previous);
+            throw;
+        }
+    }
+
+    double probability(double low, double high) {
+        const double minimum = variable->getMin();
+        const double maximum = variable->getMax();
+        low = std::max(low, minimum);
+        high = std::min(high, maximum);
+        if(high <= low) return 0.0;
+        if(low == minimum && high == maximum) return 1.0;
+
+        if(!std::isfinite(fullIntegral)) {
+            fullIntegral = rawIntegral(minimum, maximum);
+        }
+        const double value = rawIntegral(low, high) / fullIntegral;
+        if(!std::isfinite(value) || value <= 0.0 || value > 1.0 + 1e-9) {
+            throw runtime_error("An adaptive marginal-PDF integral is invalid");
+        }
+        return std::min(value, 1.0);
+    }
+
+    double cdf(double coordinate) {
+        if(coordinate <= variable->getMin()) return 0.0;
+        if(coordinate >= variable->getMax()) return 1.0;
+        return probability(variable->getMin(), coordinate);
     }
 };
 
@@ -219,16 +266,17 @@ void resetYieldOnlyToyFit(
         if(!yield) {
             throw runtime_error("Cannot find a required yield in the nominal workspace");
         }
-        if(name == "n_Comb_Comb") yield->setMin(0.0);
+        if(name == "n_Sig_Comb" || name == "n_Comb_Comb") {
+            yield->setMin(0.0);
+        }
         yield->setConstant(false);
     }
 }
 
-NumericalCdf numericalCdf(
+MarginalIntegral marginalIntegral(
     RooAbsPdf &pdf,
     RooRealVar &variable,
-    const vector<RooRealVar *> &observables,
-    int gridIntervals=4096
+    const vector<RooRealVar *> &observables
 ) {
     RooArgSet integratedVariables;
     for(RooRealVar *observable : observables) {
@@ -236,31 +284,7 @@ NumericalCdf numericalCdf(
     }
     unique_ptr<RooAbsPdf> marginal(pdf.createProjection(integratedVariables));
     if(!marginal) throw runtime_error("Cannot construct a one-dimensional PDF projection");
-    const double previous = variable.getVal();
-    RooArgSet normalization(variable);
-    vector<double> grid(gridIntervals + 1, 0.0);
-    vector<double> density(gridIntervals + 1, 0.0);
-    vector<double> cumulative(gridIntervals + 1, 0.0);
-    const double step = (variable.getMax() - variable.getMin()) / gridIntervals;
-    for(int index = 0; index <= gridIntervals; ++index) {
-        grid[index] = variable.getMin() + index * step;
-        variable.setVal(grid[index]);
-        density[index] = marginal->getVal(&normalization);
-        if(!std::isfinite(density[index]) || density[index] < 0.0) {
-            throw runtime_error("A numerical marginal-PDF integration point is invalid");
-        }
-        if(index > 0) {
-            cumulative[index] = cumulative[index - 1] +
-                0.5 * step * (density[index - 1] + density[index]);
-        }
-    }
-    variable.setVal(previous);
-    const double integral = cumulative.back();
-    if(!std::isfinite(integral) || integral <= 0.0) {
-        throw runtime_error("Numerical marginal-PDF normalization failed");
-    }
-    for(double &value : cumulative) value /= integral;
-    return {std::move(marginal), &variable, std::move(grid), std::move(cumulative)};
+    return {std::move(marginal), &variable};
 }
 
 vector<double> quantileEdges(
@@ -269,7 +293,7 @@ vector<double> quantileEdges(
     const vector<RooRealVar *> &observables,
     int numberOfBins
 ) {
-    NumericalCdf cdf = numericalCdf(pdf, variable, observables);
+    MarginalIntegral integral = marginalIntegral(pdf, variable, observables);
     vector<double> edges(numberOfBins + 1, 0.0);
     edges.front() = variable.getMin();
     edges.back() = variable.getMax();
@@ -279,7 +303,7 @@ vector<double> quantileEdges(
         double high = variable.getMax();
         for(int iteration = 0; iteration < 80; ++iteration) {
             const double middle = 0.5 * (low + high);
-            if(cdf.value(middle) < target) low = middle;
+            if(integral.cdf(middle) < target) low = middle;
             else high = middle;
         }
         edges[edgeIndex] = 0.5 * (low + high);
@@ -306,7 +330,10 @@ Chi2Result projectionChi2(
     const vector<double> &edges,
     const vector<ObservedEvent> *observedEvents,
     const RooAbsData *toyData,
-    int valueIndex
+    int valueIndex,
+    int pairedValueIndex,
+    RooRealVar *pairedVariable,
+    bool symmetrizePairProjection
 ) {
     const int numberOfBins = static_cast<int>(edges.size()) - 1;
     Chi2Result result;
@@ -316,38 +343,77 @@ Chi2Result projectionChi2(
     result.sumWeightsSquared.assign(numberOfBins, 0.0);
     result.expected.assign(numberOfBins, 0.0);
 
+    const auto fillProjection = [&](
+        double value,
+        double pairedValue,
+        double weight
+    ) {
+        const int index = binIndex(value, edges);
+        if(!symmetrizePairProjection) {
+            if(index < 0) return;
+            result.sumWeights[index] += weight;
+            result.sumWeightsSquared[index] += weight * weight;
+            return;
+        }
+
+        const int pairedIndex = binIndex(pairedValue, edges);
+        if(index < 0 || pairedIndex < 0) {
+            throw runtime_error(
+                "A pair-symmetrized projection value is outside its bin range");
+        }
+        const double halfWeight = 0.5 * weight;
+        result.sumWeights[index] += halfWeight;
+        result.sumWeights[pairedIndex] += halfWeight;
+        if(index == pairedIndex) {
+            result.sumWeightsSquared[index] += weight * weight;
+        } else {
+            const double quarterWeightSquared =
+                halfWeight * halfWeight;
+            result.sumWeightsSquared[index] += quarterWeightSquared;
+            result.sumWeightsSquared[pairedIndex] += quarterWeightSquared;
+        }
+    };
+
     if(observedEvents) {
         for(const ObservedEvent &event : *observedEvents) {
-            const int index = binIndex(event.values[valueIndex], edges);
-            if(index < 0) continue;
-            result.sumWeights[index] += event.weight;
-            result.sumWeightsSquared[index] += event.weight * event.weight;
+            fillProjection(
+                event.values[valueIndex],
+                event.values[pairedValueIndex],
+                event.weight);
         }
     } else if(toyData) {
+        if(symmetrizePairProjection && !pairedVariable) {
+            throw runtime_error(
+                "A pair-symmetrized toy projection has no paired variable");
+        }
         for(int entry = 0; entry < toyData->numEntries(); ++entry) {
             const RooArgSet *row = toyData->get(entry);
             const double value = row->getRealValue(variable.GetName());
+            const double pairedValue = symmetrizePairProjection ?
+                row->getRealValue(pairedVariable->GetName()) : value;
             const double weight = toyData->weight();
-            const int index = binIndex(value, edges);
-            if(index < 0) continue;
-            result.sumWeights[index] += weight;
-            result.sumWeightsSquared[index] += weight * weight;
+            fillProjection(value, pairedValue, weight);
         }
     } else {
         throw runtime_error("Projection chi2 received neither observed nor toy data");
     }
 
-    NumericalCdf cdf = numericalCdf(pdf, variable, observables);
+    MarginalIntegral integral = marginalIntegral(pdf, variable, observables);
     const double expectedTotal = pdf.expectedEvents(&normalizationSet);
     if(!std::isfinite(expectedTotal) || expectedTotal <= 0.0) {
         throw runtime_error("The fitted model has an invalid expected event yield");
     }
     for(int index = 0; index < numberOfBins; ++index) {
-        const double probability = cdf.value(edges[index + 1]) -
-            cdf.value(edges[index]);
+        const double probability = integral.probability(
+            edges[index], edges[index + 1]);
         result.expected[index] = expectedTotal * probability;
         if(result.sumWeightsSquared[index] <= 0.0 || probability <= 0.0) {
-            throw runtime_error("A nominal-quantile chi2 bin has zero variance or expectation");
+            ostringstream message;
+            message << "Projection " << variable.GetName() << " bin " << index
+                << " [" << edges[index] << "," << edges[index + 1]
+                << "] has sumw2=" << result.sumWeightsSquared[index]
+                << " and probability=" << probability;
+            throw runtime_error(message.str());
         }
         const double difference = result.sumWeights[index] - result.expected[index];
         result.chi2 += difference * difference / result.sumWeightsSquared[index];
@@ -357,6 +423,48 @@ Chi2Result projectionChi2(
             result.minimumEffectiveEntries, effectiveEntries);
     }
     return result;
+}
+
+unique_ptr<RooDataSet> makePairSymmetrizedObservedProjectionData(
+    const vector<ObservedEvent> &events,
+    RooRealVar &variable,
+    const vector<double> &edges,
+    int valueIndex,
+    int pairedValueIndex
+) {
+    RooRealVar eventWeight("evt_weight_sym_projection",
+        "evt_weight_sym_projection", 0.0, 1000.0);
+    RooArgSet plotVariables;
+    plotVariables.add(variable);
+    plotVariables.add(eventWeight);
+    const string dataName =
+        "observed_pair_symmetrized_" + string(variable.GetName());
+    unique_ptr<RooDataSet> data(new RooDataSet(
+        dataName.c_str(), dataName.c_str(), plotVariables,
+        WeightVar(eventWeight)));
+
+    const auto addEntry = [&](double value, double weight) {
+        variable.setVal(value);
+        eventWeight.setVal(weight);
+        data->add(plotVariables, weight);
+    };
+    for(const ObservedEvent &event : events) {
+        const double value = event.values[valueIndex];
+        const double pairedValue = event.values[pairedValueIndex];
+        const int index = binIndex(value, edges);
+        const int pairedIndex = binIndex(pairedValue, edges);
+        if(index < 0 || pairedIndex < 0) {
+            throw runtime_error(
+                "A pair-symmetrized plotting value is outside its bin range");
+        }
+        if(index == pairedIndex) {
+            addEntry(0.5 * (edges[index] + edges[index + 1]), event.weight);
+        } else {
+            addEntry(value, 0.5 * event.weight);
+            addEntry(pairedValue, 0.5 * event.weight);
+        }
+    }
+    return data;
 }
 
 unique_ptr<RooDataSet> makeObservedPlotData(
@@ -397,7 +505,8 @@ void drawProjectionPlot(
     const ProjectionDefinition &projection,
     const Chi2Result &chi2,
     const string &axisTitle,
-    bool logarithmicY
+    bool logarithmicY,
+    bool symmetrizePairProjection
 ) {
     const int numberOfBins = static_cast<int>(projection.edges.size()) - 1;
     const string objectSuffix = projection.name + "_" + std::to_string(numberOfBins);
@@ -452,6 +561,11 @@ void drawProjectionPlot(
     binText << numberOfBins << (logarithmicY ? " quantile bins" :
         " nominal-PDF quantile bins");
     chi2Label.DrawLatex(annotationX, annotationY - 0.045, binText.str().c_str());
+    if(symmetrizePairProjection) {
+        chi2Label.DrawLatex(
+            annotationX, annotationY - 0.090,
+            "pair-symmetrized: w/2 per J/#psi");
+    }
 
     TPad *pullPad = dynamic_cast<TPad *>(canvas.cd(2));
     pullPad->SetPad(0.01, 0.03, 0.99, 0.25);
@@ -625,7 +739,11 @@ void Fit_Check(
     string resultTag="gof_root640_v1",
     unsigned int baseSeed=20260901,
     int projectionBins=20,
-    bool makeToy0Diagnostics=true
+    bool makeToy0Diagnostics=true,
+    string weightDataFileName="WeightData.root",
+    string modelFileName="Model_4D_tot.root",
+    string fitResultFileName="Fit_4D_tot_native_asymptotic_unseeded.root",
+    bool symmetrizePairProjections=false
 ) {
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 40, 0)
     cerr << "The corrected-error toy validation requires ROOT >= 6.40" << endl;
@@ -645,10 +763,10 @@ void Fit_Check(
     const string fitAttemptsPath = resultDirectory + "/fit_attempts.csv";
     gSystem->mkdir(resultDirectory.c_str(), kTRUE);
     try {
-        TFile dataFile("WeightData.root", "READ");
+        TFile dataFile(weightDataFileName.c_str(), "READ");
         TTree *dataTree = dynamic_cast<TTree *>(dataFile.Get("data"));
         if(dataFile.IsZombie() || !dataTree) {
-            throw runtime_error("Cannot read WeightData.root:data");
+            throw runtime_error("Cannot read " + weightDataFileName + ":data");
         }
         const vector<ObservedEvent> observedEvents = readObservedEvents(*dataTree);
         double observedSumWeights = 0.0;
@@ -658,7 +776,7 @@ void Fit_Check(
             observedSumWeightsSquared += event.weight * event.weight;
         }
 
-        TFile modelFile("Model_4D_tot.root", "READ");
+        TFile modelFile(modelFileName.c_str(), "READ");
         RooWorkspace *workspace = dynamic_cast<RooWorkspace *>(modelFile.Get("wsp"));
         RooAddPdf *pdf = workspace ? dynamic_cast<RooAddPdf *>(workspace->pdf("pdf_all")) : nullptr;
         RooAbsPdf *pdfPP = workspace ? workspace->pdf("pdf_P_P") : nullptr;
@@ -672,7 +790,7 @@ void Fit_Check(
            !pdfNPP || !pdfNPNP || !pdfSigComb || !pdfCombSig || !pdfCombComb) {
             throw runtime_error("Cannot read the nominal 4D model and all components");
         }
-        TFile fitResultFile("Fit_4D_tot_native_asymptotic_unseeded.root", "READ");
+        TFile fitResultFile(fitResultFileName.c_str(), "READ");
         RooFitResult *truthResult = dynamic_cast<RooFitResult *>(
             fitResultFile.Get("fit_result_native_asymptotic"));
         if(fitResultFile.IsZombie() || !acceptedToyFit(truthResult)) {
@@ -708,6 +826,7 @@ void Fit_Check(
             {"Jpsi_ctau1", ctau1, {}},
             {"Jpsi_ctau2", ctau2, {}}
         };
+        const vector<int> pairedValueIndices = {1, 0, 3, 2};
         for(ProjectionDefinition &projection : projections) {
             projection.edges = quantileEdges(
                 *pdf, *projection.variable, observables, projectionBins);
@@ -717,7 +836,10 @@ void Fit_Check(
         for(int index = 0; index < 4; ++index) {
             observedChi2.push_back(projectionChi2(
                 *pdf, *projections[index].variable, observables, observableSet,
-                projections[index].edges, &observedEvents, nullptr, index));
+                projections[index].edges, &observedEvents, nullptr, index,
+                pairedValueIndices[index],
+                observables[pairedValueIndices[index]],
+                symmetrizePairProjections));
         }
 
         if(startToy == 0) {
@@ -727,16 +849,18 @@ void Fit_Check(
             ofstream configuration(resultDirectory + "/configuration.txt");
             configuration << setprecision(17)
                 << "root_version=" << gROOT->GetVersion() << "\n"
+                << "weight_data=" << weightDataFileName << "\n"
+                << "model_file=" << modelFileName << "\n"
+                << "fit_result_file=" << fitResultFileName << "\n"
                 << "error_convention=ROOT native AsymptoticError(true)\n"
                 << "external_seed=false; toy fits start from nominal truth as in the historical toy method\n"
                 << "fit_parameters=n_P_P,n_P_NP,n_NP_NP,n_Sig_Comb,n_Comb_Comb floating; all nominal shape parameters fixed\n"
-                << "n_Comb_Comb_range=physical lower boundary 0; upper boundary inherited from the nominal workspace\n"
+                << "n_Sig_Comb_and_n_Comb_Comb_range=physical lower boundary 0; upper boundaries inherited from the nominal workspace; n_Sig_Comb is shared by Sig_Comb and Comb_Sig\n"
                 << "fit_gate=status=0,covQual=3,EDM<0.01\n"
                 << "fit_error_gate=n_P_P error finite and positive\n"
                 << "fit_attempt_1=baseline yield-only configuration\n"
-                << "fit_attempt_2=continue from attempt 1 endpoint with Strategy(2) and Offset(true); use n_Comb_Comb fixed at 0 if attempt 1 failed at its lower boundary\n"
-                << "fit_attempt_3=only if attempt 2 first fails at the n_Comb_Comb lower boundary; refit with n_Comb_Comb fixed at 0\n"
-                << "n_Comb_Comb_boundary_fallback=after a failed fit only, fix n_Comb_Comb=0 when the result is at the lower boundary or ROOT reports its out-of-range covariance evaluation\n"
+                << "fit_retry=after a failed baseline, continue from its endpoint with Strategy(2) and Offset(true)\n"
+                << "boundary_fallback=after a failed fit only, fix n_Sig_Comb and/or n_Comb_Comb at 0 when the result is at the corresponding lower boundary or ROOT reports its out-of-range covariance evaluation; retry with Strategy(2) and Offset(true)\n"
                 << "near_boundary_definition=distance <= max(1e-9,0.1*fitted_error)\n"
                 << "observed_fit_entries=" << observedEvents.size() << "\n"
                 << "observed_sumw=" << observedSumWeights << "\n"
@@ -745,9 +869,17 @@ void Fit_Check(
                 << "poisson_weight_rate=" << poissonRate << "\n"
                 << "n_P_P_truth=" << nPPTruth << "\n"
                 << "projection_bins=" << projectionBins << " nominal-PDF quantiles\n"
-                << "projection_integration=numerical trapezoid of the nominal marginal PDF on 4096 intervals; ROOT analytical ctau CDF is not used\n"
+                << "projection_integration=adaptive Gauss-Kronrod integral of point-evaluated one-dimensional marginal PDF over each requested interval, divided by the corresponding full-range integral; absolute tolerance 1e-10, relative tolerance 1e-9, maximum 100000 subintervals; no fixed CDF grid, interpolation, RooFit createIntegral, or analytical ctau CDF\n"
+                << "projection_pair_symmetrization=" <<
+                    (symmetrizePairProjections ?
+                        "enabled: each physical pair contributes w/2 at Jpsi1 and w/2 at Jpsi2 within the same observable family" :
+                        "disabled: Jpsi1 and Jpsi2 projected separately") << "\n"
+                << "projection_sumw2=" <<
+                    (symmetrizePairProjections ?
+                        "pair-level covariance retained: [w/2*(I1+I2)]^2 per physical pair and bin" :
+                        "standard event-level sum of w^2") << "\n"
                 << "chi2_definition=sum((sumw-expected)^2/sumw2); no binned refit\n"
-                << "projection_plot=weighted data and all nominal 4D PDF components in the exact chi2 quantile bins\n"
+                << "projection_plot=weighted data with the same projection and sumw2 convention as the numeric chi2, plus all nominal 4D PDF components in the exact chi2 quantile bins\n"
                 << "projection_pull=(sumw-expected)/sqrt(sumw2), identical to the chi2 bin contribution\n"
                 << "toy0_fit_diagnostics=" << (makeToy0Diagnostics ?
                     "enabled: 100 uniform-bin nominal-style projections plus ROOT artifact" :
@@ -793,11 +925,21 @@ void Fit_Check(
                 "c#tau(J/#psi_{1}) [cm]", "c#tau(J/#psi_{2}) [cm]"
             };
             for(int index = 0; index < 4; ++index) {
+                unique_ptr<RooDataSet> pairSymmetrizedPlotData;
+                const RooAbsData *plotData = observedPlotData.get();
+                if(symmetrizePairProjections) {
+                    pairSymmetrizedPlotData =
+                        makePairSymmetrizedObservedProjectionData(
+                            observedEvents, *projections[index].variable,
+                            projections[index].edges, index,
+                            pairedValueIndices[index]);
+                    plotData = pairSymmetrizedPlotData.get();
+                }
                 drawProjectionPlot(
-                    plotDirectory, *observedPlotData, *pdf, *pdfPP, *pdfPNP,
+                    plotDirectory, *plotData, *pdf, *pdfPP, *pdfPNP,
                     *pdfNPP, *pdfNPNP, *pdfSigComb, *pdfCombSig, *pdfCombComb,
                     projections[index], observedChi2[index], axisTitles[index],
-                    index >= 2);
+                    index >= 2, symmetrizePairProjections);
             }
 
             ofstream results(resultsPath);
@@ -881,46 +1023,54 @@ void Fit_Check(
                 WeightVar("evt_weight"));
 
             resetYieldOnlyToyFit(*workspace, *truthResult);
+            RooRealVar *toyNSigComb = workspace->var("n_Sig_Comb");
             RooRealVar *toyNCombComb = workspace->var("n_Comb_Comb");
-            if(!toyNCombComb) {
-                throw runtime_error("Cannot find n_Comb_Comb for the toy boundary fallback");
+            if(!toyNSigComb || !toyNCombComb) {
+                throw runtime_error(
+                    "Cannot find n_Sig_Comb or n_Comb_Comb for the toy boundary fallback");
             }
-            const auto atCombCombLowerBoundary = [](const RooRealVar *parameter) {
+            const auto atLowerBoundary = [](const RooRealVar *parameter) {
                 if(!parameter || !parameter->hasMin()) return false;
                 const double tolerance = 1e-4 * std::max(
                     1.0, std::fabs(parameter->getError()));
                 return std::fabs(parameter->getMin()) <= tolerance &&
                     parameter->getVal() <= parameter->getMin() + tolerance;
             };
+            bool sigCombBoundaryFallbackActive = false;
             bool combCombBoundaryFallbackActive = false;
-            bool combCombBoundaryFallbackUsed = false;
-            const auto activateCombCombBoundaryFallback = [&]() {
-                if(combCombBoundaryFallbackActive) return;
-                toyNCombComb->setVal(0.0);
-                toyNCombComb->setConstant(true);
-                combCombBoundaryFallbackActive = true;
+            const auto activateBoundaryFallback = [&](RooRealVar *parameter,
+                                                        bool &active) {
+                if(active) return false;
+                parameter->setVal(0.0);
+                parameter->setConstant(true);
+                active = true;
                 cerr << "Toy " << toyId
-                    << ": fixing n_Comb_Comb=0 after a failed boundary fit"
-                    << endl;
+                    << ": fixing " << parameter->GetName()
+                    << "=0 after a failed boundary fit" << endl;
+                return true;
             };
             unique_ptr<RooFitResult> fitResult;
             int attempts = 0;
             string lastException;
             for(int attempt = 0; attempt < kMaximumFitAttempts; ++attempt) {
-                if(attempt >= 2 &&
-                   (!combCombBoundaryFallbackActive ||
-                    combCombBoundaryFallbackUsed)) break;
                 attempts = attempt + 1;
-                const bool usingCombCombBoundaryFallback =
-                    combCombBoundaryFallbackActive;
-                if(usingCombCombBoundaryFallback) {
-                    combCombBoundaryFallbackUsed = true;
+                bool activatedBoundaryFallback = false;
+                string fitMode;
+                if(attempt == 0) {
+                    fitMode = "baseline_yield_only";
+                } else {
+                    fitMode = "strategy2_offset";
+                    if(sigCombBoundaryFallbackActive) {
+                        fitMode += "_n_Sig_Comb_fixed_zero";
+                    }
+                    if(combCombBoundaryFallbackActive) {
+                        fitMode += "_n_Comb_Comb_fixed_zero";
+                    }
+                    if(!sigCombBoundaryFallbackActive &&
+                       !combCombBoundaryFallbackActive) {
+                        fitMode += "_yield_only";
+                    }
                 }
-                const string fitMode = attempt == 0 ?
-                    "baseline_yield_only" :
-                    (usingCombCombBoundaryFallback ?
-                        "strategy2_offset_n_Comb_Comb_fixed_zero" :
-                        "strategy2_offset_yield_only");
                 string attemptException;
                 unique_ptr<RooFitResult> attemptResult;
                 try {
@@ -939,14 +1089,24 @@ void Fit_Check(
                     lastException = attemptException;
                     cerr << "Toy " << toyId << " attempt " << attempts
                         << " threw: " << attemptException << endl;
-                    const bool explicitCombCombRangeException =
+                    const bool outsideDefaultRange =
                         attemptException.find("outside the default range") !=
-                            string::npos &&
+                            string::npos;
+                    const bool explicitSigCombRangeException =
+                        outsideDefaultRange &&
+                        attemptException.find("n_Sig_Comb") != string::npos;
+                    const bool explicitCombCombRangeException =
+                        outsideDefaultRange &&
                         attemptException.find("n_Comb_Comb") != string::npos;
-                    if(!combCombBoundaryFallbackActive &&
-                       (explicitCombCombRangeException ||
-                        atCombCombLowerBoundary(toyNCombComb))) {
-                        activateCombCombBoundaryFallback();
+                    if(explicitSigCombRangeException ||
+                       atLowerBoundary(toyNSigComb)) {
+                        activatedBoundaryFallback |= activateBoundaryFallback(
+                            toyNSigComb, sigCombBoundaryFallbackActive);
+                    }
+                    if(explicitCombCombRangeException ||
+                       atLowerBoundary(toyNCombComb)) {
+                        activatedBoundaryFallback |= activateBoundaryFallback(
+                            toyNCombComb, combCombBoundaryFallbackActive);
                     }
                     const RooArgList &truthParameters = truthResult->floatParsFinal();
                     for(int parameterIndex = 0;
@@ -966,11 +1126,18 @@ void Fit_Check(
                 const bool acceptedAttempt =
                     acceptedToyFit(attemptResult.get()) &&
                     attemptException.empty();
-                if(!acceptedAttempt && !combCombBoundaryFallbackActive) {
+                if(!acceptedAttempt) {
+                    const RooRealVar *attemptNSigComb = fittedParameter(
+                        attemptResult.get(), "n_Sig_Comb");
                     const RooRealVar *attemptNCombComb = fittedParameter(
                         attemptResult.get(), "n_Comb_Comb");
-                    if(atCombCombLowerBoundary(attemptNCombComb)) {
-                        activateCombCombBoundaryFallback();
+                    if(atLowerBoundary(attemptNSigComb)) {
+                        activatedBoundaryFallback |= activateBoundaryFallback(
+                            toyNSigComb, sigCombBoundaryFallbackActive);
+                    }
+                    if(atLowerBoundary(attemptNCombComb)) {
+                        activatedBoundaryFallback |= activateBoundaryFallback(
+                            toyNCombComb, combCombBoundaryFallbackActive);
                     }
                 }
                 int nearBoundaryCount = -1;
@@ -996,6 +1163,7 @@ void Fit_Check(
                 fitAttempts.flush();
                 if(attemptResult) fitResult = std::move(attemptResult);
                 if(acceptedAttempt) break;
+                if(attempt > 0 && !activatedBoundaryFallback) break;
             }
 
             if(makeToy0Diagnostics && toyId == 0 && fitResult) {
@@ -1067,7 +1235,10 @@ void Fit_Check(
             for(int index = 0; index < 4; ++index) {
                 toyChi2.push_back(projectionChi2(
                     *pdf, *projections[index].variable, observables, observableSet,
-                    projections[index].edges, nullptr, &toyData, index).chi2);
+                    projections[index].edges, nullptr, &toyData, index,
+                    pairedValueIndices[index],
+                    observables[pairedValueIndices[index]],
+                    symmetrizePairProjections).chi2);
             }
             const double fittedNPP = nPP->getVal();
             const double fittedNPPError = nPP->getError();

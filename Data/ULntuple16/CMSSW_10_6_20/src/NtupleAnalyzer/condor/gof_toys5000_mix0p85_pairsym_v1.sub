@@ -1,0 +1,17 @@
+universe = vanilla
+executable = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/run_gof_toys5000_mix0p85_pairsym_condor.sh
+arguments = $(ProcId)
+initialdir = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer
+output = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/condor/logs/gof_toys5000_mix0p85_pairsym_v1.$(ClusterId).$(ProcId).out
+error = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/condor/logs/gof_toys5000_mix0p85_pairsym_v1.$(ClusterId).$(ProcId).err
+log = /eos/home-l/leyao/26JJ/JPsiJPsi/Data/ULntuple16/CMSSW_10_6_20/src/NtupleAnalyzer/condor/logs/gof_toys5000_mix0p85_pairsym_v1.$(ClusterId).log
+request_cpus = 1
+request_memory = 4000
+request_disk = 2000000
++MaxRuntime = 3600
+should_transfer_files = NO
+notification = Never
+on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)
+environment = "PATH=/cvmfs/cms.cern.ch/common:/usr/local/bin:/usr/bin:/bin"
+
+queue 100

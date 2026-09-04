@@ -192,7 +192,7 @@ def main():
                float(row[9]) >= 0.01:
                 raise RuntimeError(f"Fit-quality failure for global toy {global_id}")
             attempts = int(row[5])
-            if attempts < 1 or attempts > 3:
+            if attempts < 1 or attempts > 4:
                 raise RuntimeError(f"Invalid attempt count for global toy {global_id}")
             result_attempt_counts[attempts] += 1
             truth_values.add(row[10])
@@ -276,6 +276,7 @@ def main():
             f"attempts_1={result_attempt_counts[1]}",
             f"attempts_2={result_attempt_counts[2]}",
             f"attempts_3={result_attempt_counts[3]}",
+            f"attempts_4={result_attempt_counts[4]}",
         ]
         for mode, count in sorted(fit_modes.items()):
             metadata_lines.append(f"fit_mode_{mode}={count}")
