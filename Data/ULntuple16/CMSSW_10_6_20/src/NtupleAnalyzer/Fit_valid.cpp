@@ -46,7 +46,12 @@ void failValidation(const string &message) {
     gSystem->Exit(1);
 }
 
-double approvedCorrectionRelative(
+// These values reproduce the frozen base differential-fit table.  They are
+// not the formal systematic result.  The confirmed signed-multiplicative
+// correction and H018 fitter components are combined by
+// scripts/collect/recombine_systematics.py and published through
+// fit_results/_CURRENT/systematics.
+double baseCampaignCorrectionRelative(
     const string &variable,
     double minimum,
     double maximum,
@@ -180,10 +185,10 @@ void Fit_valid(
     const double branchingRelative = 0.011;
     const double luminosityRelative = 0.012;
     const double lifetimeRelative = 0.003;
-    const double correctionRelative = approvedCorrectionRelative(
+    const double correctionRelative = baseCampaignCorrectionRelative(
         var, vmin, vmax, isTotal);
     if(correctionRelative < 0.0) {
-        failValidation("No approved correction systematic for " + var);
+        failValidation("No base-campaign correction systematic for " + var);
         return;
     }
     const double width = isTotal ? 1.0 : vmax - vmin;

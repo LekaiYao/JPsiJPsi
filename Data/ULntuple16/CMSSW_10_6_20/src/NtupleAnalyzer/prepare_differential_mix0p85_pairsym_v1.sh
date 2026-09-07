@@ -62,7 +62,8 @@ awk -F, 'NF != 27 || $1 != "total" || $2 != "total" ||
     echo "reference_total_fit=ROOT native AsymptoticError(true), Strategy(${reference_strategy}), no external seed"
     echo "reference_strategy_policy=try Strategy(2); if it fails before producing accepted artifacts, retry Strategy(1)"
     echo "differential_fit=all total shape parameters fixed; five yields float; failed fits may retry with Strategy(2)+Offset(true); failed lower-boundary n_Sig_Comb and/or n_Comb_Comb may be fixed to zero"
-    echo "correction_systematic=0.85:0.15 sys3; total relative 0.08805293089840492"
+    echo "systematic_status=base_fit_table_only; formal result is fit_results/_CURRENT/systematics"
+    echo "base_correction_systematic=legacy 0.85:0.15 sys3; total relative 0.08805293089840492"
     echo "root_version=$(root-config --version)"
     echo "prepared_at=$(date --iso-8601=seconds)"
     sha256sum "${result_dir}/inputs/${weight_name}" "${total_dir}/Model_4D_tot.root" "${total_dir}/Fit_4D_tot_native_asymptotic_unseeded.root" "${total_dir}/Model_4D_tot_ref.root" "${total_dir}/Fit_4D_tot_ref_native_asymptotic_unseeded.root" "${result_dir}/total_row.csv" Fit_4D_diff.cpp Fit_valid.cpp Plot_4D.hpp collect_differential_newdata167.py run_differential_mix0p85_pairsym_condor.sh
